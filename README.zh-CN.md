@@ -2,9 +2,9 @@
 
 **从 Claude Code 提取的轻量级 AI 编码代理 SDK。**
 
-通过逆向工程 Claude Code 的生产架构构建。保留所有能力，去除冗余。开源、完全可定制、生产就绪。
+基于Claude Code 的生产架构重新构建。保留所有能力，去除冗余。开源、完全可定制、生产就绪。
 
-> 💡 **基于 Claude Code** — 与驱动 Anthropic 官方编码助手的战斗测试引擎相同，现在作为独立 SDK 提供。
+> 💡 **基于 Claude Code** — 与驱动 Anthropic 官方编码测试引擎相同，现在作为独立 SDK 提供。
 
 [English](README.md) | 简体中文
 
@@ -251,7 +251,7 @@ ANTHROPIC_API_KEY=sk-xxx npm run test:integration
 
 ## 许可证
 
-从 Claude Code 提取，用于教育和开发目的。
+MIT 许可证。
 
 ---
 
