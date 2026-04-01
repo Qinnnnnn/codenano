@@ -28,6 +28,7 @@ const apiConfig = {
 
 describe.skipIf(!hasApiKey)('Live Agent Integration', () => {
   it('basic ask — no tools', async () => {
+    console.log('[TEST] Starting basic ask test...')
     const agent = createAgent({
       ...apiConfig,
       model: MODEL,
@@ -35,7 +36,11 @@ describe.skipIf(!hasApiKey)('Live Agent Integration', () => {
       maxTurns: 1,
     })
 
+    console.log('[TEST] Sending request to API...')
     const result = await agent.ask('Say "hello"')
+    console.log('[TEST] Response:', result.text)
+    console.log('[TEST] Tokens - Input:', result.usage.inputTokens, 'Output:', result.usage.outputTokens)
+    console.log('[TEST] Duration:', result.durationMs, 'ms')
 
     expect(result.text).toBeTruthy()
     expect(result.text.toLowerCase()).toContain('hello')
@@ -70,6 +75,7 @@ describe.skipIf(!hasApiKey)('Live Agent Integration', () => {
   }, 30_000)
 
   it('tool use — agent calls a tool and uses the result', async () => {
+    console.log('[TEST] Starting tool use test...')
     const getWeather = defineTool({
       name: 'GetWeather',
       description: 'Get current weather for a city',
@@ -77,6 +83,7 @@ describe.skipIf(!hasApiKey)('Live Agent Integration', () => {
         city: z.string().describe('City name'),
       }),
       execute: async ({ city }) => {
+        console.log('[TOOL] GetWeather called for city:', city)
         return JSON.stringify({ city, temperature: 22, condition: 'sunny' })
       },
       isReadOnly: true,
@@ -90,7 +97,10 @@ describe.skipIf(!hasApiKey)('Live Agent Integration', () => {
       maxTurns: 5,
     })
 
+    console.log('[TEST] Asking about weather...')
     const result = await agent.ask('What is the weather in Tokyo?')
+    console.log('[TEST] Response:', result.text)
+    console.log('[TEST] Turns:', result.numTurns)
 
     expect(result.text).toBeTruthy()
     // Agent should have used the tool and mentioned the result

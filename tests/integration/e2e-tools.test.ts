@@ -71,6 +71,7 @@ describe.skipIf(!hasApiKey)('E2E: Built-in Tools', () => {
   beforeEach(async () => { await new Promise(r => setTimeout(r, THROTTLE_MS)) })
   it('Read tool — agent reads a real file and extracts info', async () => {
     await withRetry(async () => {
+      console.log('[TEST] Starting Read tool test...')
       const agent = createAgent({
         ...apiConfig,
         model: MODEL,
@@ -80,16 +81,20 @@ describe.skipIf(!hasApiKey)('E2E: Built-in Tools', () => {
       })
 
       const pkgPath = path.resolve(process.cwd(), 'package.json')
+      console.log('[TEST] Asking agent to read:', pkgPath)
       const result = await agent.ask(`Read ${pkgPath} and tell me the project name.`)
+      console.log('[TEST] Response:', result.text)
+      console.log('[TEST] Turns:', result.numTurns)
 
       assertHasText(result)
-      expect(result.text.toLowerCase()).toContain('agent-core')
+      expect(result.text.toLowerCase()).toContain('codenano')
       expect(result.numTurns).toBeGreaterThanOrEqual(2)
     })
   }, 60_000)
 
   it('Grep tool — agent searches codebase for a pattern', async () => {
     await withRetry(async () => {
+      console.log('[TEST] Starting Grep tool test...')
       const agent = createAgent({
         ...apiConfig,
         model: MODEL,
@@ -98,9 +103,12 @@ describe.skipIf(!hasApiKey)('E2E: Built-in Tools', () => {
         maxTurns: 5,
       })
 
+      console.log('[TEST] Asking agent to search for "createAgent"...')
       const result = await agent.ask(
         `Search for "createAgent" in ${process.cwd()}/src/. How many files contain it?`
       )
+      console.log('[TEST] Response:', result.text)
+      console.log('[TEST] Turns:', result.numTurns)
 
       assertHasText(result)
       expect(result.numTurns).toBeGreaterThanOrEqual(2)
