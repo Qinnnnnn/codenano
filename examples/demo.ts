@@ -51,7 +51,7 @@ async function main() {
       console.log(`[Tool] Input:`, JSON.stringify(event.input, null, 2))
     }
     if (event.type === 'tool_result') {
-      console.log(`[Tool] Result: ${event.result}`)
+      console.log(`[Tool] Result: ${event.output}`)
     }
     if (event.type === 'turn_end') {
       console.log(`\n[Turn ${event.turnNumber}] Ended (${event.stopReason})`)

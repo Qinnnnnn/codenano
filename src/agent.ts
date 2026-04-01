@@ -243,7 +243,7 @@ class AgentImpl implements Agent {
         break
       }
 
-      yield { type: 'turn_start', turnNumber: turnCount }
+      // turn_start will be yielded by toPublicEvent when message_start arrives
 
       // ── Snip old messages (fast, zero-cost) ────────────────────────
       const snipResult = snipIfNeeded(messages)
@@ -308,9 +308,9 @@ class AgentImpl implements Agent {
           this.abortController.signal,
           maxOutputTokensOverride,
         )) {
-          // Yield public stream events
+          // Yield public stream events (skip tool_use and turn_end, we handle them manually)
           const publicEvent = toPublicEvent(event, turnCount)
-          if (publicEvent) {
+          if (publicEvent && publicEvent.type !== 'tool_use' && publicEvent.type !== 'turn_end') {
             yield publicEvent
           }
 
