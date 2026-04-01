@@ -1,6 +1,6 @@
 # codenano
 
-SDK for building AI coding agents, extracted from codenano's core architecture (~5,500 lines vs ~150,000+).
+SDK for building AI coding agents, extracted from Claude Code's core architecture (~5,500 lines vs ~150,000+).
 
 ## Install
 
@@ -94,8 +94,8 @@ codenano/
 | [Configuration](docs/configuration.md) | Full config reference, provider detection, prompt priority, CLAUDE.md |
 | [Reliability](docs/reliability.md) | Auto-compact, 413 recovery, max output escalation, retry, fallback, budgeting |
 | [Prompt System](docs/prompt-system.md) | System prompt architecture, section layout, source files |
-| [Gap Analysis](docs/gap-analysis.md) | SDK vs codenano: equivalent, simplified, missing |
-| [Engine Reference](docs/engine-reference/) | Original codenano source files (annotated) |
+| [Gap Analysis](docs/gap-analysis.md) | SDK vs Claude Code: equivalent, simplified, missing |
+| [Engine Reference](docs/engine-reference/) | Original Claude Code source files (annotated) |
 
 ## Testing
 
