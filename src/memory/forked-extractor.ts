@@ -106,14 +106,28 @@ ${indexContent ? `## Memory index (MEMORY.md)\n${indexContent}\n` : ''}`
 
 Analyze the last ~${Math.min(messages.length, 10)} messages and extract any memories worth saving.`
 
-    // Call model with cached [REDACTED]
+    // Summarize recent conversation as a single user message
+    const recentMessages = messages.slice(-10)
+    const conversationSummary = recentMessages.map(m => {
+      const role = m.role === 'user' ? 'User' : 'Assistant'
+      const content = typeof m.content === 'string'
+        ? m.content
+        : Array.isArray(m.content)
+          ? m.content
+              .filter((b: any) => b.type === 'text')
+              .map((b: any) => b.text)
+              .join('\n')
+          : ''
+      return `${role}: ${content}`
+    }).join('\n\n')
+
+    // Call model with cached system prompt
     const response = await client.messages.create({
       model,
       max_tokens: 4096,
       system: systemBlocks,
       messages: [
-        ...messages.slice(-10),
-        { role: 'user', content: extractionPrompt }
+        { role: 'user', content: `${extractionPrompt}\n\nHere is the recent conversation:\n\n${conversationSummary}` }
       ]
     })
 
@@ -123,10 +137,11 @@ Analyze the last ~${Math.min(messages.length, 10)} messages and extract any memo
       .map(b => b.text)
       .join('')
 
-    const jsonMatch = text.match(/\[[\s\S]*\]/)
+    const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\[[\s\S]*\])/)
     if (!jsonMatch) return
 
-    const memories: Memory[] = JSON.parse(jsonMatch[0])
+    const jsonStr = jsonMatch[1] || jsonMatch[0]
+    const memories: Memory[] = JSON.parse(jsonStr)
     if (!Array.isArray(memories) || memories.length === 0) return
 
     for (const mem of memories) {
