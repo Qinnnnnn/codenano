@@ -1,14 +1,14 @@
 /**
  * Query Tracking Usage Examples
  *
- * 演示如何使用 Query Tracking 功能
+ * Demonstrates how to use Query Tracking feature
  */
 
 import { createAgent, defineTool } from 'codenano'
 import { z } from 'zod'
 
 // ============================================================================
-// 示例 1: 基础使用 - 监听 query_start 事件
+// Example 1: Basic Usage - Listen to query_start event
 // ============================================================================
 
 async function example1_basicUsage() {
@@ -36,7 +36,7 @@ async function example1_basicUsage() {
 }
 
 // ============================================================================
-// 示例 2: 从 Result 获取 queryTracking
+// Example 2: Get queryTracking from Result
 // ============================================================================
 
 async function example2_fromResult() {
@@ -55,7 +55,7 @@ async function example2_fromResult() {
 }
 
 // ============================================================================
-// 示例 3: Session 中的 queryTracking
+// Example 3: queryTracking in Session
 // ============================================================================
 
 async function example3_session() {
@@ -68,24 +68,24 @@ async function example3_session() {
 
   console.log('\n=== Example 3: Session ===')
 
-  // 第一轮
+  // First turn
   const result1 = await session.send('My name is Alice')
   console.log('Turn 1:')
   console.log('  Chain ID:', result1.queryTracking.chainId)
   console.log('  Depth:', result1.queryTracking.depth) // 0
 
-  // 第二轮 - 继承 chainId，depth + 1
+  // Second turn - inherits chainId, depth + 1
   const result2 = await session.send('What is my name?')
   console.log('Turn 2:')
-  console.log('  Chain ID:', result2.queryTracking.chainId) // 相同
+  console.log('  Chain ID:', result2.queryTracking.chainId) // same
   console.log('  Depth:', result2.queryTracking.depth) // 1
 
-  // 验证 chainId 相同
+  // Verify same chainId
   console.log('Same chain?', result1.queryTracking.chainId === result2.queryTracking.chainId)
 }
 
 // ============================================================================
-// 示例 4: 与日志系统集成
+// Example 4: Integration with Logging System
 // ============================================================================
 
 async function example4_withLogging() {
@@ -96,7 +96,7 @@ async function example4_withLogging() {
 
   console.log('\n=== Example 4: With Logging ===')
 
-  // 简单的日志函数
+  // Simple logging function
   function log(level: string, message: string, tracking: any) {
     const timestamp = new Date().toISOString()
     console.log(`[${timestamp}] [${level}] [${tracking.chainId.slice(0, 8)}:${tracking.depth}] ${message}`)
@@ -118,7 +118,7 @@ async function example4_withLogging() {
 }
 
 // ============================================================================
-// 示例 5: 工具调用追踪
+// Example 5: Tool Call Tracking
 // ============================================================================
 
 async function example5_toolTracking() {
@@ -161,7 +161,7 @@ async function example5_toolTracking() {
 }
 
 // ============================================================================
-// 示例 6: 多个 Agent 实例
+// Example 6: Multiple Agent Instances
 // ============================================================================
 
 async function example6_multipleAgents() {
@@ -186,7 +186,7 @@ async function example6_multipleAgents() {
 }
 
 // ============================================================================
-// 示例 7: 错误追踪
+// Example 7: Error Tracking
 // ============================================================================
 
 async function example7_errorTracking() {
@@ -217,7 +217,7 @@ async function example7_errorTracking() {
 }
 
 // ============================================================================
-// 运行所有示例
+// Run All Examples
 // ============================================================================
 
 async function runAllExamples() {
@@ -230,7 +230,7 @@ async function runAllExamples() {
   await example7_errorTracking()
 }
 
-// 取消注释以运行
+// Uncomment to run
 // runAllExamples().catch(console.error)
 
 export {

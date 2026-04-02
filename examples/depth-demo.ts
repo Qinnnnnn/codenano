@@ -1,6 +1,6 @@
 /**
  * Query Tracking Depth Example
- * 演示不同深度的 queryTracking
+ * Demonstrates different depths of queryTracking
  */
 
 import { createAgent } from '../src/index.js'
@@ -8,7 +8,7 @@ import { createAgent } from '../src/index.js'
 async function demonstrateDepth() {
   console.log('=== Query Tracking Depth Demo ===\n')
 
-  // 示例 1: Session 中的深度递增
+  // Example 1: Depth increment in Session
   console.log('📊 Example 1: Session Depth Increment\n')
 
   const agent = createAgent({

@@ -1,5 +1,5 @@
 /**
- * 运行 Query Tracking 示例
+ * Run Query Tracking Example
  */
 
 import { createAgent } from '../src/index.js'
