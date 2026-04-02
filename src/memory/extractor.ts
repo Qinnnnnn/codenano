@@ -42,6 +42,11 @@ ${indexContent ? `## Memory index (MEMORY.md)\n${indexContent}\n` : ''}
 - Debugging solutions (fix is in the code)
 - Ephemeral task details
 
+## How to save
+Each memory is saved as a separate .md file with frontmatter, and an entry is added to MEMORY.md index.
+
+MEMORY.md format: \`- [Title](filename.md) — one-line description\`
+
 ## Output format
 Respond with a JSON array of memories to save. If nothing worth saving, respond with [].
 

@@ -39,6 +39,10 @@ ${memory.content}
 `
 
   writeFileSync(filepath, content, 'utf-8')
+
+  // Update MEMORY.md index
+  updateMemoryIndex(memory, memoryDir)
+
   return filepath
 }
 
@@ -80,4 +84,29 @@ export function loadMemoryIndex(memoryDir?: string): string | null {
 
   if (!existsSync(indexPath)) return null
   return readFileSync(indexPath, 'utf-8')
+}
+
+export function updateMemoryIndex(memory: Memory, memoryDir?: string): void {
+  const dir = getMemoryDir(memoryDir)
+  const indexPath = join(dir, 'MEMORY.md')
+
+  const filename = `${memory.name.replace(/[^a-z0-9_-]/gi, '_')}.md`
+  const entry = `- [${memory.name}](${filename}) — ${memory.description}\n`
+
+  let content = existsSync(indexPath) ? readFileSync(indexPath, 'utf-8') : ''
+
+  // Check if entry already exists
+  if (content.includes(filename)) {
+    // Update existing entry
+    const lines = content.split('\n')
+    const updatedLines = lines.map(line =>
+      line.includes(filename) ? entry.trim() : line
+    )
+    content = updatedLines.join('\n')
+  } else {
+    // Append new entry
+    content += entry
+  }
+
+  writeFileSync(indexPath, content, 'utf-8')
 }
