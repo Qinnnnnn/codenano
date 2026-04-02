@@ -128,12 +128,17 @@ const agent = createAgent({
 
 Persistent cross-session memory. The agent can save learnings and load them in future sessions.
 
+**Default path:** `~/.agent-core/memory/<cwd-hash>/` (auto-created, isolated per project via md5 hash of `process.cwd()`)
+
+**Custom path:** Set `memory.memoryDir` to any directory.
+
 ```typescript
 const agent = createAgent({
   model: 'claude-sonnet-4-6',
   memory: {
-    autoLoad: true,           // inject memories into system prompt
-    extractStrategy: 'auto',  // extract after every turn
+    memoryDir: './my-memory',     // optional — defaults to ~/.agent-core/memory/<hash>/
+    autoLoad: true,               // inject memories into system prompt
+    extractStrategy: 'auto',      // extract after every turn
   },
 })
 ```
@@ -185,13 +190,17 @@ const dir = getMemoryDir()
 
 Save and resume multi-turn sessions using JSONL files. Inspired by Claude Code's session storage design.
 
+**Default path:** `~/.agent-core/sessions/` (auto-created, shared across all projects)
+
+**Custom path:** Set `persistence.storageDir` to any directory.
+
 ```typescript
 const agent = createAgent({
   model: 'claude-sonnet-4-6',
   tools: coreTools(),
   persistence: {
     enabled: true,                    // enable JSONL persistence
-    storageDir: './my-sessions',      // optional custom directory
+    storageDir: './my-sessions',      // optional — defaults to ~/.agent-core/sessions/
   },
 })
 

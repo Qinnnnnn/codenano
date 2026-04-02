@@ -114,6 +114,31 @@ saveMemory({
 const memories = scanMemories('/path/to/memory')
 ```
 
+### Storage paths
+
+Both memory and session persistence have sensible defaults and support custom paths. Directories are created automatically if they don't exist.
+
+| Feature | Default Path | Custom Config |
+|---------|-------------|---------------|
+| **Memory** | `~/.agent-core/memory/<cwd-hash>/` | `memory.memoryDir` |
+| **Session** | `~/.agent-core/sessions/` | `persistence.storageDir` |
+
+```typescript
+// Use defaults — zero config
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  memory: { autoLoad: true, extractStrategy: 'auto' },
+  persistence: { enabled: true },
+})
+
+// Or specify custom paths
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  memory: { memoryDir: './my-project/memory', autoLoad: true },
+  persistence: { enabled: true, storageDir: './my-project/sessions' },
+})
+```
+
 ### Custom Tools
 
 ```typescript

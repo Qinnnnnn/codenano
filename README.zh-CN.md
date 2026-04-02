@@ -111,6 +111,31 @@ saveMemory({
 const memories = scanMemories('/path/to/memory')
 ```
 
+### 存储路径
+
+记忆和会话持久化都有合理的默认路径，也支持自定义。目录不存在时会自动创建。
+
+| 功能 | 默认路径 | 自定义配置 |
+|------|---------|-----------|
+| **记忆** | `~/.agent-core/memory/<cwd-hash>/` | `memory.memoryDir` |
+| **会话** | `~/.agent-core/sessions/` | `persistence.storageDir` |
+
+```typescript
+// 使用默认路径 — 零配置
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  memory: { autoLoad: true, extractStrategy: 'auto' },
+  persistence: { enabled: true },
+})
+
+// 或指定自定义路径
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  memory: { memoryDir: './my-project/memory', autoLoad: true },
+  persistence: { enabled: true, storageDir: './my-project/sessions' },
+})
+```
+
 ### 自定义工具
 
 ```typescript
