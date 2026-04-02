@@ -42,6 +42,7 @@ import { partitionToolCalls, executeSingleTool, executeBatchConcurrently } from 
 import { snipIfNeeded } from './snip-compact.js'
 import { microcompact } from './microcompact.js'
 import { createMemoryExtractor } from './memory/index.js'
+import { getMemorySection } from './prompt/sections/memory.js'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -118,6 +119,14 @@ export class SessionImpl implements Session {
       const instructions = await loadInstructions()
       if (instructions) {
         prompt = prompt + '\n\n' + instructions
+      }
+    }
+
+    // Append memory section if autoLoad is enabled
+    if (this.config.memory?.autoLoad !== false) {
+      const memoryPrompt = getMemorySection(this.config.memory?.memoryDir)
+      if (memoryPrompt) {
+        prompt = prompt + '\n\n' + memoryPrompt
       }
     }
 

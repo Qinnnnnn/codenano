@@ -24,7 +24,7 @@ export function buildMemoryPrompt(memories: Memory[], indexContent?: string | nu
   if (memories.length > 0) {
     prompt += `## Loaded Memories (${memories.length})\n\n`
     for (const mem of memories) {
-      prompt += `### ${mem.name} (${mem.type})\n${mem.description}\n\n`
+      prompt += `### ${mem.name} (${mem.type})\n${mem.description}\n\n${mem.content}\n\n`
     }
   }
 
