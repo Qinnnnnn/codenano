@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/Adamlixi/codenano/compare/v0.2.0...v0.3.0) (2026-04-03)
+
+
+### Features
+
+* add cost tracking, git integration, sub-agent spawning, extended hooks, and context analysis ([58b7873](https://github.com/Adamlixi/codenano/commit/58b7873b404d2a72ba98e72ad4df6ac54aa99bff))
+* add dedicated E2E examples for each new feature ([e37d2e2](https://github.com/Adamlixi/codenano/commit/e37d2e2ce56d656f03b543fa102295fc5f6eb8e5))
+
+
+### Documentation
+
+* add cost tracking, git, hooks, sub-agent, context analysis to README and docs ([fcf3e29](https://github.com/Adamlixi/codenano/commit/fcf3e2932eee2738e2df5c96e588658326f5df85))
+
 ## [0.2.0](https://github.com/Adamlixi/codenano/compare/v0.1.2...v0.2.0) (2026-04-02)
 
 
