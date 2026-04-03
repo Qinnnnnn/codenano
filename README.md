@@ -139,6 +139,93 @@ const agent = createAgent({
 })
 ```
 
+### Cost tracking? Automatic.
+
+Every `Result` includes `costUSD` — estimated API cost based on model pricing.
+
+```typescript
+const result = await agent.ask('Explain this code')
+console.log(`Cost: $${result.costUSD.toFixed(4)}`)  // e.g. $0.0047
+```
+
+Use the standalone API for budget management:
+
+```typescript
+import { CostTracker, calculateCostUSD } from 'codenano'
+
+const tracker = new CostTracker()
+tracker.add('claude-sonnet-4-6', result.usage)
+console.log(`Total: $${tracker.summary.totalUSD.toFixed(4)}`)
+```
+
+### Git integration? Built-in.
+
+Auto-detect git repo state for system prompt injection:
+
+```typescript
+import { getGitState, buildGitPromptSection } from 'codenano'
+
+const state = getGitState()
+// { isGit: true, branch: 'main', commitHash: 'abc123...', isClean: false, ... }
+
+const section = buildGitPromptSection(state)
+// "- Is a git repository: true\n- Current branch: main\n..."
+```
+
+### Lifecycle hooks? 8 of them.
+
+Observe and control agent behavior at every lifecycle point:
+
+```typescript
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  tools: coreTools(),
+
+  onTurnStart: ({ turnNumber }) => console.log(`Turn ${turnNumber}`),
+
+  // Block dangerous tools
+  onPreToolUse: ({ toolName, toolInput }) => {
+    if (toolName === 'Bash' && toolInput.command?.includes('rm -rf'))
+      return { block: 'Destructive commands blocked' }
+  },
+
+  onPostToolUse: ({ toolName, output }) => console.log(`${toolName}: ${output.slice(0, 50)}`),
+  onCompact: ({ messagesBefore, messagesAfter }) => console.log(`Compacted: ${messagesBefore} → ${messagesAfter}`),
+  onError: ({ error }) => console.error(error.message),
+  onMaxTurns: () => console.warn('Max turns reached'),
+})
+```
+
+All hooks are best-effort — errors in hooks never crash the agent.
+
+### Sub-agent spawning? One function.
+
+```typescript
+import { createAgent, createAgentTool, coreTools } from 'codenano'
+
+const config = { model: 'claude-sonnet-4-6', tools: coreTools() }
+const agentTool = createAgentTool(config)
+
+const agent = createAgent({
+  ...config,
+  tools: [...coreTools(), agentTool],  // model can now spawn sub-agents
+})
+```
+
+### Context analysis? Ready.
+
+Analyze conversation context to identify compression opportunities:
+
+```typescript
+import { analyzeContext, classifyTool } from 'codenano'
+
+const analysis = analyzeContext(session.history)
+// { toolCalls: 5, duplicateFileReads: { '/a.ts': 3 }, collapsibleResults: 4, ... }
+
+classifyTool('Grep')   // 'search'
+classifyTool('Bash')   // 'execute'
+```
+
 ### Custom Tools
 
 ```typescript
@@ -234,7 +321,11 @@ codenano/
     agent.ts           # Core agent loop
     session.ts         # Multi-turn conversations
     session-storage.ts # Session persistence (JSONL)
-    tools/             # 17 built-in tools
+    hooks.ts           # Lifecycle hook helpers
+    cost-tracker.ts    # Token-based cost tracking
+    git.ts             # Git state detection
+    context-analysis.ts # Tool classification & context analysis
+    tools/             # 17 built-in tools + createAgentTool
     prompt/            # System prompt builder
     memory/            # Persistent memory system
     provider.ts        # Anthropic SDK + Bedrock

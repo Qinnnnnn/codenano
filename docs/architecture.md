@@ -12,6 +12,7 @@ createAgent(config)
   |     +-- Static sections (cached)  --- intro, system, tasks, actions, tools, tone, efficiency
   |     +-- Dynamic sections (per-turn) -- environment, language, custom
   |     +-- CLAUDE.md instructions ------ auto-loaded from project hierarchy (opt-in)
+  |     +-- Git state ------------------- branch, commit, clean status (via buildGitPromptSection)
   |
   +-- Provider ---------- Anthropic SDK / Bedrock client + streaming
   |     |
@@ -22,20 +23,25 @@ createAgent(config)
         |
         v
       auto-compact if approaching context limit
+        |                                          ← onCompact hook
         v
       call model (streaming, with retry)
-        |
+        |                                          ← onTurnStart hook
         +-- streaming tool executor: start tools as blocks complete
         v
       max_tokens? -> escalate 8k->64k -> then inject "resume" -> retry (up to 3x)
         v
       extract tool_use blocks
         v
-      no tools? -> stop hook check -> return result
+      no tools? -> stop hook check -> return result (with costUSD)
+        v
+      onPreToolUse hook -> can block tool execution
         v
       streaming executor: collect remaining results (or batch fallback)
         v
       validate input (Zod) -> permission check -> execute
+        v
+      onPostToolUse hook -> observe results
         v
       apply tool result budget (50KB per-tool, 200KB per-message)
         v

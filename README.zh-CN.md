@@ -136,6 +136,93 @@ const agent = createAgent({
 })
 ```
 
+### 成本追踪？自动。
+
+每个 `Result` 都包含 `costUSD` — 基于模型定价的 API 费用估算。
+
+```typescript
+const result = await agent.ask('解释这段代码')
+console.log(`费用: $${result.costUSD.toFixed(4)}`)  // 例如 $0.0047
+```
+
+独立 API 用于预算管理：
+
+```typescript
+import { CostTracker, calculateCostUSD } from 'codenano'
+
+const tracker = new CostTracker()
+tracker.add('claude-sonnet-4-6', result.usage)
+console.log(`总计: $${tracker.summary.totalUSD.toFixed(4)}`)
+```
+
+### Git 集成？内置。
+
+自动检测 git 仓库状态，注入系统提示：
+
+```typescript
+import { getGitState, buildGitPromptSection } from 'codenano'
+
+const state = getGitState()
+// { isGit: true, branch: 'main', commitHash: 'abc123...', isClean: false, ... }
+
+const section = buildGitPromptSection(state)
+// "- Is a git repository: true\n- Current branch: main\n..."
+```
+
+### 生命周期钩子？8 个。
+
+在每个生命周期点观察和控制代理行为：
+
+```typescript
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  tools: coreTools(),
+
+  onTurnStart: ({ turnNumber }) => console.log(`第 ${turnNumber} 轮`),
+
+  // 阻止危险工具
+  onPreToolUse: ({ toolName, toolInput }) => {
+    if (toolName === 'Bash' && toolInput.command?.includes('rm -rf'))
+      return { block: '破坏性命令已被阻止' }
+  },
+
+  onPostToolUse: ({ toolName, output }) => console.log(`${toolName}: ${output.slice(0, 50)}`),
+  onCompact: ({ messagesBefore, messagesAfter }) => console.log(`压缩: ${messagesBefore} → ${messagesAfter}`),
+  onError: ({ error }) => console.error(error.message),
+  onMaxTurns: () => console.warn('达到最大轮次'),
+})
+```
+
+所有钩子都是尽力执行 — 钩子中的错误不会导致代理崩溃。
+
+### 子代理生成？一个函数。
+
+```typescript
+import { createAgent, createAgentTool, coreTools } from 'codenano'
+
+const config = { model: 'claude-sonnet-4-6', tools: coreTools() }
+const agentTool = createAgentTool(config)
+
+const agent = createAgent({
+  ...config,
+  tools: [...coreTools(), agentTool],  // 模型现在可以生成子代理
+})
+```
+
+### 上下文分析？就绪。
+
+分析对话上下文，识别压缩机会：
+
+```typescript
+import { analyzeContext, classifyTool } from 'codenano'
+
+const analysis = analyzeContext(session.history)
+// { toolCalls: 5, duplicateFileReads: { '/a.ts': 3 }, collapsibleResults: 4, ... }
+
+classifyTool('Grep')   // 'search'
+classifyTool('Bash')   // 'execute'
+```
+
 ### 自定义工具
 
 ```typescript
@@ -263,7 +350,11 @@ codenano/
     agent.ts           # 核心代理循环
     session.ts         # 多轮对话
     session-storage.ts # 会话持久化（JSONL）
-    tools/             # 17 个内置工具
+    hooks.ts           # 生命周期钩子
+    cost-tracker.ts    # 成本追踪
+    git.ts             # Git 状态检测
+    context-analysis.ts # 工具分类与上下文分析
+    tools/             # 17 个内置工具 + createAgentTool
     prompt/            # 系统提示构建器
     memory/            # 持久化记忆系统
     provider.ts        # Anthropic SDK + Bedrock
