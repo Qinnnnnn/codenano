@@ -1,6 +1,6 @@
 # Gap Analysis: codenano vs Claude Code
 
-This codenano SDK captures Claude Code's core agent loop in ~6,500 lines (vs ~150,000+).
+This codenano SDK captures Claude Code's core agent loop in ~8,000 lines (vs ~150,000+).
 
 ## What's Equivalent
 
@@ -11,6 +11,7 @@ This codenano SDK captures Claude Code's core agent loop in ~6,500 lines (vs ~15
 | **System prompt** | All 11 sections faithfully reproduced with static/dynamic boundary and caching |
 | **Prompt priority** | `override > agent > custom > default > append` |
 | **Session** | Multi-turn with persistent history via `session.send()` / `session.stream()` |
+| **Session persistence** | JSONL-based save/resume via `persistence` config, `session.id` + `agent.session(id)` |
 | **Tool builder** | `defineTool()` with Zod schemas, validation, `isReadOnly`/`isConcurrencySafe` |
 | **Provider** | Anthropic direct + Bedrock auto-detection, `baseURL` proxy support |
 | **Tool concurrency** | `partitionToolCalls()` groups consecutive safe tools, runs in parallel (max 10) |
@@ -23,46 +24,45 @@ This codenano SDK captures Claude Code's core agent loop in ~6,500 lines (vs ~15
 | **CLAUDE.md loading** | Discovers user/project/local/rules files from directory hierarchy |
 | **Streaming tool executor** | Tools start executing as content blocks complete during stream |
 | **Max output escalation** | 8K cap -> 64K escalation before recovery inject (opt-in) |
-| **Memory system** | `saveMemory()`, `loadMemory()`, `scanMemories()`, MEMORY.md index, forked extraction |
+| **Memory system** | `saveMemory()`, `scanMemories()`, MEMORY.md index, auto-extraction with forked agent |
+| **Cost tracking** | `costUSD` in every Result, `CostTracker` class, per-model pricing |
+| **Git integration** | `getGitState()`, `findGitRoot()`, `buildGitPromptSection()` with caching |
+| **Hook system** | 8 lifecycle hooks: onTurnStart, onPreToolUse (blocking), onPostToolUse, onCompact, onError, onMaxTurns, onSessionStart, onTurnEnd |
+| **Sub-agent spawning** | `createAgentTool(parentConfig)` spawns child agents with inherited tools |
+| **MCP protocol** | `connectMCPServer()` with stdio/SSE/HTTP transports, `mcpToolsToToolDefs()` auto-wrapping |
+| **Skill system** | `loadSkills()` from `.claude/skills/` directories, `createSkillTool()`, inline + fork execution |
+| **Context analysis** | `analyzeContext()`, `classifyTool()`, `isCollapsible()` — duplicate read detection |
 
 ## What's Simplified (by design)
 
 | Claude Code | codenano | Rationale |
 |-------------|-----|-----------|
-| 6 permission modes + rule layers + ML classifier | Single `canUseTool` callback | SDK users implement their own policy |
-| 16 hook event types | `onTurnEnd` only | Extensibility via callbacks, not config files |
-| Zustand app state + React Context | Stateless -- config in, result out | SDK doesn't own the UI |
-| 101 slash commands | None | SDK, not CLI |
-| Terminal UI (146 Ink components) | Headless -- `StreamEvent` only | Users build their own UI |
+| 6 permission modes + rule layers + ML classifier | Single `canUseTool` callback + `onPreToolUse` blocking | SDK users implement their own policy |
+| 26 hook event types + shell/http/agent executors | 8 callback hooks (TypeScript functions only) | SDK doesn't need shell/http hook executors |
+| Zustand app state + React Context | Stateless — config in, result out | SDK doesn't own the UI |
+| 101 slash commands | Skills loaded from disk via `loadSkills()` | SDK, not CLI |
+| Terminal UI (146 Ink components) | Headless — `StreamEvent` only | Users build their own UI |
 | Analytics (Datadog, Growthbook) | None | Users bring their own observability |
-| 6-layer compaction | 2-layer: auto-compact + 413 reactive | Covers 90% of use cases |
+| 6-layer compaction + context collapse | 2-layer: auto-compact + 413 reactive + context analysis | Covers 90% of use cases |
 | 2-tier budgeting (per-tool disk persist + per-message aggregate) | Single-tier inline truncation | No disk persistence needed |
 | CLAUDE.md 1480-line pipeline (@include, conditional, frontmatter) | ~200 lines, core discovery only | SDK needs discovery, not enterprise features |
-| StreamingToolExecutor (531 lines) | ~200 lines, core queue + concurrent execution | No progress streaming or context modification |
-| Max output cap (GrowthBook feature gate) | Config-based `maxOutputTokensCap` option | No feature flags needed |
+| Full MCP: OAuth, resources, prompts, elicitation | Tool listing + calling only | SDK users add auth if needed |
+| Fork subagent with prompt-cache sharing, worktree isolation | Basic child agent via `createAgent()` | No worktree/cache complexity |
+| Skill marketplace + plugin system + conditional activation | Disk-based skill loading + inline/fork execution | SDK needs loading, not marketplace |
 
-## What's Missing
-
-### P2 -- Missing Subsystems
+## Remaining Gaps
 
 | Gap | Claude Code | codenano | Impact |
-|-----|-------------|-----|--------|
-| **Hook system** | 16 event types: PreToolUse, PostToolUse, SessionStart, etc. | 8 lifecycle hooks: onTurnStart, onPreToolUse (blocking), onPostToolUse, onCompact, onError, onMaxTurns, onSessionStart, onTurnEnd | Core hooks implemented, no shell/http/agent hook executors |
-| **Memory system** | Auto-extract learnings, auto-dream consolidation, 4 memory types | Implemented: save/load/scan/extract with forked agent support | Core memory works, no auto-dream consolidation |
-| **MCP protocol** | Full MCP client: auth, resources, tools, elicitation | `connectMCPServer()` with stdio/SSE/HTTP transports, `mcpToolsToToolDefs()` auto-wrapping | Core tool integration works, no OAuth/resources/elicitation |
-| **Sub-agent spawning** | `AgentTool` -> `runForkedAgent()` with shared prompt cache | `createAgentTool(parentConfig)` spawns child agents with inherited tools | Works, no fork/worktree/prompt-cache sharing |
-| **Permission rules** | Source-layered rules, always-allow/deny lists, bash classifier | Callback only + onPreToolUse blocking | SDK users must build their own rule engine |
-
-### P3 -- Nice to Have
-
-| Gap | codenano | SDK |
-|-----|-------------|-----|
-| Session persistence | Transcript saved to disk, `/resume` to reload | JSONL-based persistence via `persistence` config, `session.id` + `agent.session(id)` for resume |
-| Skill/plugin system | Loadable skills from disk + marketplace | None |
-| Git integration | Commit attribution, branch tracking, worktrees | `getGitState()`, `findGitRoot()`, `buildGitPromptSection()` — read-only state queries with caching |
-| Cost tracking | Running USD cost accumulation | `costUSD` in every Result, `CostTracker` class, per-model pricing for opus/sonnet/haiku |
-| Context analysis | Context collapse with tool classification | `analyzeContext()`, `classifyTool()`, `isCollapsible()` — duplicate read detection, collapsible result counting |
-| Abort mid-stream | Synthetic tool_results for orphaned tool_use blocks | Loop break, partial result |
+|-----|-------------|---------|--------|
+| **Auto-dream consolidation** | Periodic memory summarization + pattern extraction | No consolidation — only save/load/extract | Long-running agents may accumulate redundant memories |
+| **MCP OAuth** | Full OAuth flow with token refresh | No auth — users pass static headers | Requires manual token management for OAuth servers |
+| **MCP resources/prompts** | `listResources()`, `readResource()`, `listPrompts()`, `getPrompt()` | Tool listing + calling only | No access to MCP resource/prompt APIs |
+| **Fork with prompt-cache sharing** | Byte-identical system prompt prefix for cache reuse | Fresh `createAgent()` per sub-agent | Higher cost for parallel sub-agents |
+| **Worktree isolation** | Git worktree per sub-agent | No isolation | Sub-agents share filesystem |
+| **Permission rule engine** | Source-layered rules, always-allow/deny lists, bash classifier | Callback + hook only | SDK users must build their own rule engine |
+| **Abort mid-stream** | Synthetic tool_results for orphaned tool_use blocks | Loop break, partial result | Orphaned tool_use blocks on abort |
+| **Conditional skills** | `paths` field activates skills when matching files are touched | All loaded skills always available | No file-pattern-based activation |
+| **Skill hooks** | Skills can define PreToolUse/PostToolUse hooks in frontmatter | No per-skill hooks | Skills can't customize tool behavior |
 
 ## Systems Intentionally Excluded
 
@@ -73,4 +73,4 @@ This codenano SDK captures Claude Code's core agent loop in ~6,500 lines (vs ~15
 | Desktop bridge (REPL-desktop IPC) | IDE integration, not SDK |
 | Remote sessions (WebSocket) | Application-layer concern |
 | Analytics (Datadog, Growthbook) | Users bring their own observability |
-| 101 slash commands | CLI concern |
+| Slash commands (101 built-in) | CLI concern — skills cover the extensibility need |
