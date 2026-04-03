@@ -249,6 +249,7 @@ allTools()       // 全部 17 个工具
 - ✅ 记忆系统（跨会话持久化）
 - ✅ 查询追踪（调试/分析）
 - ✅ 会话持久化（基于 JSONL 的保存/恢复）
+- ✅ 扩展钩子（8 个生命周期钩子：onTurnStart、onPreToolUse、onPostToolUse、onCompact、onError 等）
 
 ---
 
@@ -267,12 +268,12 @@ codenano/
     memory/            # 持久化记忆系统
     provider.ts        # Anthropic SDK + Bedrock
     compact.ts         # 自动压缩逻辑
-  tests/               # 326 个测试
+  tests/               # 374 个测试
   examples/            # 可运行示例
   docs/                # 完整文档
 ```
 
-**326 个测试。100% 生产就绪。**
+**374 个测试。100% 生产就绪。**
 
 ---
 
@@ -292,7 +293,7 @@ codenano/
 ## 测试
 
 ```bash
-# 单元测试（326 个测试）
+# 单元测试（374 个测试）
 npm test
 
 # 带覆盖率
@@ -313,13 +314,14 @@ ANTHROPIC_API_KEY=sk-xxx npm run test:integration
 - [x] 停止钩子（生命周期回调）
 - [x] 工具结果预算
 - [x] 会话持久化（JSONL 保存/恢复）
+- [x] 扩展钩子（8 个生命周期钩子）
+- [x] 成本追踪（基于 token 的 USD 估算）
+- [x] Git 集成（状态检测、提示注入）
+- [x] 子代理生成（createAgentTool）
+- [x] 上下文折叠（工具分类、上下文分析）
 
 **即将推出：**
-- [ ] 子代理生成
 - [ ] MCP 协议支持
-- [ ] Git 集成
-- [ ] 成本跟踪
-- [ ] 上下文折叠（高级压缩）
 
 ---
 

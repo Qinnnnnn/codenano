@@ -54,6 +54,27 @@ export interface AgentConfig {
   /** Stop hook — called when agent finishes a turn without tool use */
   onTurnEnd?: StopHookFn
 
+  /** Called when a session is created */
+  onSessionStart?: NotifyHookFn
+
+  /** Called at the start of each agent loop turn */
+  onTurnStart?: NotifyHookFn
+
+  /** Called before each tool executes. Return { block: reason } to prevent execution. */
+  onPreToolUse?: PreToolUseHookFn
+
+  /** Called after each tool executes with the result */
+  onPostToolUse?: PostToolUseHookFn
+
+  /** Called when auto-compact summarizes conversation history */
+  onCompact?: CompactHookFn
+
+  /** Called when an error occurs during the agent loop */
+  onError?: ErrorHookFn
+
+  /** Called when the agent reaches the maximum number of turns */
+  onMaxTurns?: NotifyHookFn
+
   /** Provider override (default: auto-detected from env) */
   provider?: 'anthropic' | 'bedrock'
 
@@ -234,6 +255,54 @@ export type StopHookResult = {
   preventContinuation?: boolean
 }
 
+// ─── Extended Hooks ────────────────────────────────────────────────────────
+
+/** Context passed to all lifecycle hooks */
+export interface HookContext {
+  /** Session ID (available in session mode) */
+  sessionId?: string
+  /** Current turn number (0 before first turn) */
+  turnNumber: number
+  /** Conversation messages so far */
+  messages: readonly MessageParam[]
+}
+
+/** Pre-tool-use hook — called before each tool executes. Can block execution. */
+export type PreToolUseHookFn = (context: HookContext & {
+  toolName: string
+  toolInput: Record<string, unknown>
+  toolUseId: string
+}) => PreToolUseResult | Promise<PreToolUseResult>
+
+/** Result from pre-tool-use hook */
+export type PreToolUseResult = {
+  /** Block this tool call. The reason is returned to the model as an error. */
+  block?: string
+} | void
+
+/** Post-tool-use hook — called after each tool executes. Observe results. */
+export type PostToolUseHookFn = (context: HookContext & {
+  toolName: string
+  toolInput: Record<string, unknown>
+  toolUseId: string
+  output: string
+  isError: boolean
+}) => void | Promise<void>
+
+/** Notification hook (fire-and-forget, no return value) */
+export type NotifyHookFn = (context: HookContext) => void | Promise<void>
+
+/** Error hook — called when an error occurs during the agent loop */
+export type ErrorHookFn = (context: HookContext & {
+  error: Error
+}) => void | Promise<void>
+
+/** Compact hook — called when auto-compact summarizes conversation history */
+export type CompactHookFn = (context: HookContext & {
+  messagesBefore: number
+  messagesAfter: number
+}) => void | Promise<void>
+
 // ─── Stream Events ──────────────────────────────────────────────────────────
 
 /** Events yielded during agent.stream() */
@@ -269,6 +338,9 @@ export interface Result {
 
   /** Duration in milliseconds */
   durationMs: number
+
+  /** Estimated API cost in USD */
+  costUSD: number
 
   /** Query tracking information */
   queryTracking: QueryTracking

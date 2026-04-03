@@ -57,6 +57,89 @@ interface AgentConfig {
 }
 ```
 
+## Cost Tracking
+
+Every `Result` now includes `costUSD` — the estimated API cost based on model pricing and token usage.
+
+```typescript
+const result = await agent.ask('Explain this code')
+console.log(`Cost: $${result.costUSD.toFixed(4)}`)
+console.log(`Tokens: ${result.usage.inputTokens + result.usage.outputTokens}`)
+```
+
+**Standalone API:**
+
+```typescript
+import { CostTracker, calculateCostUSD, getModelPricing } from 'codenano'
+
+// One-off calculation
+const cost = calculateCostUSD('claude-sonnet-4-6', {
+  inputTokens: 10000, outputTokens: 5000,
+  cacheReadInputTokens: 2000, cacheCreationInputTokens: 1000,
+})
+
+// Accumulate across calls
+const tracker = new CostTracker()
+tracker.add('claude-sonnet-4-6', result.usage)
+tracker.add('claude-opus-4-6', result2.usage)
+console.log(tracker.summary) // { totalUSD, totalTokens, byModel }
+```
+
+**Supported models:** claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5-20251001 (and aliases). Unknown models fall back to sonnet pricing.
+
+## Git Integration
+
+Detect git repository state and inject it into the system prompt.
+
+```typescript
+import { getGitState, buildGitPromptSection } from 'codenano'
+
+const state = getGitState()
+// { isGit, root, branch, commitHash, defaultBranch, remoteUrl, isClean, ... }
+
+const section = buildGitPromptSection(state)
+// "- Is a git repository: true\n- Current branch: main\n..."
+```
+
+Git root discovery is cached. Handles regular repos, worktrees, and submodules.
+
+## Sub-Agent Spawning
+
+Create functional `AgentTool` instances that spawn child agents:
+
+```typescript
+import { createAgent, createAgentTool, coreTools } from 'codenano'
+
+const config = {
+  model: 'claude-sonnet-4-6',
+  tools: coreTools(),
+}
+
+const agentTool = createAgentTool(config)
+const agent = createAgent({ ...config, tools: [...coreTools(), agentTool] })
+
+// The model can now spawn sub-agents via the Agent tool
+const result = await agent.ask('Read all .ts files and summarize the architecture')
+```
+
+Sub-agents inherit the parent's tools and API settings. They run with a scoped system prompt that keeps them focused on the assigned task.
+
+## Context Analysis
+
+Analyze conversation context to identify compression opportunities:
+
+```typescript
+import { analyzeContext, classifyTool } from 'codenano'
+
+const analysis = analyzeContext(session.history)
+// { totalMessages, toolCalls, toolCallsByName, duplicateFileReads, collapsibleResults, ... }
+
+classifyTool('Grep')  // 'search'
+classifyTool('Read')  // 'read'
+classifyTool('Bash')  // 'execute'
+```
+```
+
 ## Provider Auto-Detection
 
 | Condition | Provider |
@@ -124,7 +207,61 @@ const agent = createAgent({
 })
 ```
 
-## Memory System
+## Extended Hooks
+
+Beyond `onTurnEnd`, the SDK provides 7 additional lifecycle hooks inspired by Claude Code's hook system. All hooks are best-effort — errors in hooks never crash the agent loop.
+
+| Hook | When | Can Control? |
+|------|------|-------------|
+| `onSessionStart` | Session created | No |
+| `onTurnStart` | Each turn begins | No |
+| `onTurnEnd` | Turn ends without tool use | Yes (continueWith / prevent) |
+| `onPreToolUse` | Before each tool executes | Yes (block tool) |
+| `onPostToolUse` | After each tool executes | No |
+| `onCompact` | Auto-compact summarizes history | No |
+| `onError` | Error in agent loop | No |
+| `onMaxTurns` | Max turns limit reached | No |
+
+```typescript
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  tools: coreTools(),
+
+  // Observe every turn
+  onTurnStart: ({ turnNumber }) => {
+    console.log(`Turn ${turnNumber} starting...`)
+  },
+
+  // Block dangerous tools
+  onPreToolUse: ({ toolName, toolInput }) => {
+    if (toolName === 'Bash' && toolInput.command?.includes('rm -rf')) {
+      return { block: 'Destructive commands are not allowed' }
+    }
+  },
+
+  // Log tool results
+  onPostToolUse: ({ toolName, output, isError }) => {
+    console.log(`${toolName}: ${isError ? 'ERROR' : 'OK'} — ${output.slice(0, 100)}`)
+  },
+
+  // Track compaction
+  onCompact: ({ messagesBefore, messagesAfter }) => {
+    console.log(`Compacted: ${messagesBefore} → ${messagesAfter} messages`)
+  },
+
+  // Handle errors
+  onError: ({ error }) => {
+    console.error('Agent error:', error.message)
+  },
+
+  // Alert on max turns
+  onMaxTurns: ({ turnNumber }) => {
+    console.warn(`Agent hit max turns limit (${turnNumber})`)
+  },
+})
+```
+
+**PreToolUse blocking:** When `onPreToolUse` returns `{ block: reason }`, the tool is skipped and the model receives an error result: `"Tool blocked: <reason>"`. This mirrors Claude Code's PreToolUse exit code 2 behavior.
 
 Persistent cross-session memory. The agent can save learnings and load them in future sessions.
 

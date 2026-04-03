@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/codenano.svg)](https://www.npmjs.com/package/codenano)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-326%20passing-brightgreen.svg)](https://github.com/Adamlixi/codenano)
+[![Tests](https://img.shields.io/badge/tests-374%20passing-brightgreen.svg)](https://github.com/Adamlixi/codenano)
 
 **The lightweight AI coding agent SDK extracted from Claude Code.**
 
@@ -220,6 +220,7 @@ allTools()       // All 17 tools
 - ✅ Memory system (cross-session persistence)
 - ✅ Query tracking (debugging/analytics)
 - ✅ Session persistence (JSONL-based save/resume)
+- ✅ Extended hooks (8 lifecycle hooks: onTurnStart, onPreToolUse, onPostToolUse, onCompact, onError, etc.)
 
 ---
 
@@ -238,12 +239,12 @@ codenano/
     memory/            # Persistent memory system
     provider.ts        # Anthropic SDK + Bedrock
     compact.ts         # Auto-compact logic
-  tests/               # 326 tests
+  tests/               # 374 tests
   examples/            # Ready-to-run demos
   docs/                # Comprehensive guides
 ```
 
-**326 tests. 100% production-ready.**
+**374 tests. 100% production-ready.**
 
 ---
 
@@ -263,7 +264,7 @@ codenano/
 ## Testing
 
 ```bash
-# Unit tests (326 tests)
+# Unit tests (374 tests)
 npm test
 
 # With coverage
@@ -284,13 +285,14 @@ ANTHROPIC_API_KEY=sk-xxx npm run test:integration
 - [x] Stop hooks (lifecycle callbacks)
 - [x] Tool result budgeting
 - [x] Session persistence (JSONL save/resume)
+- [x] Extended hooks (8 lifecycle hooks)
+- [x] Cost tracking (token-based USD estimation)
+- [x] Git integration (state detection, prompt injection)
+- [x] Sub-agent spawning (createAgentTool)
+- [x] Context collapse (tool classification, context analysis)
 
 **Coming Soon:**
-- [ ] Sub-agent spawning
 - [ ] MCP protocol support
-- [ ] Git integration
-- [ ] Cost tracking
-- [ ] Context Collapse (advanced compression)
 
 ---
 

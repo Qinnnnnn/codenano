@@ -58,6 +58,8 @@ import { snipIfNeeded } from './snip-compact.js'
 import { microcompact } from './microcompact.js'
 import { createMemoryExtractor } from './memory/index.js'
 import { getMemorySection } from './prompt/sections/memory.js'
+import { buildHookContext, fireNotify, firePreToolUse, firePostToolUse, fireError, fireCompact } from './hooks.js'
+import { CostTracker } from './cost-tracker.js'
 
 // ─── Default Configuration ──────────────────────────────────────────────────
 
@@ -266,6 +268,7 @@ class AgentImpl implements Agent {
       cacheCreationInputTokens: 0,
       cacheReadInputTokens: 0,
     }
+    const costTracker = new CostTracker()
 
     // Initialize or increment query tracking
     const queryTracking: QueryTracking = this.queryTracking
@@ -301,7 +304,8 @@ class AgentImpl implements Agent {
         break
       }
 
-      // turn_start will be yielded by toPublicEvent when message_start arrives
+      // ── onTurnStart hook ──────────────────────────────────────────
+      await fireNotify(this.config.onTurnStart, buildHookContext(undefined, turnCount, messages))
 
       // ── Snip old messages (fast, zero-cost) ────────────────────────
       const snipResult = snipIfNeeded(messages)
@@ -318,6 +322,7 @@ class AgentImpl implements Agent {
       // ── Auto-compact check ──────────────────────────────────────────
       if (this.config.autoCompact !== false && lastUsage) {
         if (shouldAutoCompact(messages, this.config, lastUsage)) {
+          const messagesBefore = messages.length
           const compacted = await compactMessages(
             messages,
             systemPrompt,
@@ -328,6 +333,7 @@ class AgentImpl implements Agent {
           if (compacted) {
             messages = compacted
             hasAttemptedCompact = true
+            await fireCompact(this.config.onCompact, buildHookContext(undefined, turnCount, messages), messagesBefore, messages.length)
           }
         }
       }
@@ -459,15 +465,16 @@ class AgentImpl implements Agent {
       }
 
       if (modelError) {
-        yield {
-          type: 'error',
-          error: modelError instanceof Error ? modelError : new Error(String(modelError)),
-        }
+        const err = modelError instanceof Error ? modelError : new Error(String(modelError))
+        await fireError(this.config.onError, buildHookContext(undefined, turnCount, messages), err)
+        yield { type: 'error', error: err }
         break
       }
 
       if (!modelResult) {
-        yield { type: 'error', error: new Error('Model call produced no result') }
+        const err = new Error('Model call produced no result')
+        await fireError(this.config.onError, buildHookContext(undefined, turnCount, messages), err)
+        yield { type: 'error', error: err }
         break
       }
 
@@ -477,6 +484,7 @@ class AgentImpl implements Agent {
       totalUsage.outputTokens += modelResult.usage.outputTokens
       totalUsage.cacheCreationInputTokens += modelResult.usage.cacheCreationInputTokens
       totalUsage.cacheReadInputTokens += modelResult.usage.cacheReadInputTokens
+      costTracker.add(this.activeModel, modelResult.usage)
 
       lastStopReason = modelResult.stopReason ?? 'end_turn'
 
@@ -554,6 +562,7 @@ class AgentImpl implements Agent {
                 stopReason: 'stop_hook_prevented',
                 numTurns: turnCount,
                 durationMs: Date.now() - startTime,
+                costUSD: costTracker.total,
                 queryTracking,
               },
             }
@@ -579,6 +588,7 @@ class AgentImpl implements Agent {
                   stopReason: 'hook_retry_limit',
                   numTurns: turnCount,
                   durationMs: Date.now() - startTime,
+                  costUSD: costTracker.total,
                   queryTracking,
                 },
               }
@@ -616,6 +626,7 @@ class AgentImpl implements Agent {
             stopReason: lastStopReason,
             numTurns: turnCount,
             durationMs: Date.now() - startTime,
+            costUSD: costTracker.total,
             queryTracking,
           },
         }
@@ -630,12 +641,20 @@ class AgentImpl implements Agent {
       }
 
       const allToolResults: ContentBlockParam[] = []
+      const hookCtx = buildHookContext(undefined, turnCount, messages)
 
       if (streamingExecutor) {
         // ── Streaming executor: tools already started during stream ──
         for await (const result of streamingExecutor.getRemainingResults()) {
           allToolResults.push(result.apiResult)
           yield result.event
+          // Fire postToolUse for streaming results
+          if (result.event.type === 'tool_result') {
+            await firePostToolUse(this.config, hookCtx, {
+              name: result.event.toolUseId, input: {}, id: result.event.toolUseId,
+              output: result.event.output, isError: result.event.isError,
+            })
+          }
         }
       } else {
         // ── Fallback: batch execution (streaming executor disabled) ──
@@ -643,48 +662,75 @@ class AgentImpl implements Agent {
 
         for (const batch of batches) {
           if (batch.isConcurrencySafe && batch.blocks.length > 1) {
+            // Check preToolUse for each block, filter out blocked ones
+            const allowedBlocks: typeof batch.blocks = []
             for (const toolUse of batch.blocks) {
-              const tool = this.toolMap.get(toolUse.name)
-              if (tool) {
-                const parsed = tool.input.safeParse(toolUse.input)
-                if (parsed.success) {
-                  yield {
-                    type: 'tool_use',
-                    toolName: toolUse.name,
-                    toolUseId: toolUse.id,
-                    input: parsed.data,
+              const blockReason = await firePreToolUse(this.config, hookCtx, {
+                name: toolUse.name, input: toolUse.input as Record<string, unknown>, id: toolUse.id,
+              })
+              if (blockReason) {
+                const blockedResult: ContentBlockParam = {
+                  type: 'tool_result', tool_use_id: toolUse.id,
+                  content: `Tool blocked: ${blockReason}`, is_error: true,
+                } as ContentBlockParam
+                allToolResults.push(blockedResult)
+                yield { type: 'tool_result', toolUseId: toolUse.id, output: `Tool blocked: ${blockReason}`, isError: true }
+              } else {
+                allowedBlocks.push(toolUse)
+                const tool = this.toolMap.get(toolUse.name)
+                if (tool) {
+                  const parsed = tool.input.safeParse(toolUse.input)
+                  if (parsed.success) {
+                    yield { type: 'tool_use', toolName: toolUse.name, toolUseId: toolUse.id, input: parsed.data }
                   }
                 }
               }
             }
 
-            const concurrencyCap = Math.min(batch.blocks.length, 10)
-            const results = await executeBatchConcurrently(
-              batch.blocks,
-              this.toolMap,
-              this.config,
-              this.abortController.signal,
-              messages,
-              concurrencyCap,
-              enableBudget,
-            )
-
-            for (const r of results) {
-              allToolResults.push(r.apiResult)
-              yield r.event
+            if (allowedBlocks.length > 0) {
+              const concurrencyCap = Math.min(allowedBlocks.length, 10)
+              const results = await executeBatchConcurrently(
+                allowedBlocks, this.toolMap, this.config, this.abortController.signal,
+                messages, concurrencyCap, enableBudget,
+              )
+              for (const r of results) {
+                allToolResults.push(r.apiResult)
+                yield r.event
+                if (r.event.type === 'tool_result') {
+                  await firePostToolUse(this.config, hookCtx, {
+                    name: r.event.toolUseId, input: {}, id: r.event.toolUseId,
+                    output: r.event.output, isError: r.event.isError,
+                  })
+                }
+              }
             }
           } else {
             for (const toolUse of batch.blocks) {
-              const { apiResult, events } = await executeSingleTool(
-                toolUse,
-                this.toolMap,
-                this.config,
-                this.abortController.signal,
-                messages,
-                enableBudget,
-              )
-              for (const evt of events) yield evt
-              allToolResults.push(apiResult)
+              const blockReason = await firePreToolUse(this.config, hookCtx, {
+                name: toolUse.name, input: toolUse.input as Record<string, unknown>, id: toolUse.id,
+              })
+              if (blockReason) {
+                const blockedResult: ContentBlockParam = {
+                  type: 'tool_result', tool_use_id: toolUse.id,
+                  content: `Tool blocked: ${blockReason}`, is_error: true,
+                } as ContentBlockParam
+                allToolResults.push(blockedResult)
+                yield { type: 'tool_result', toolUseId: toolUse.id, output: `Tool blocked: ${blockReason}`, isError: true }
+              } else {
+                const { apiResult, events } = await executeSingleTool(
+                  toolUse, this.toolMap, this.config, this.abortController.signal, messages, enableBudget,
+                )
+                for (const evt of events) {
+                  yield evt
+                  if (evt.type === 'tool_result') {
+                    await firePostToolUse(this.config, hookCtx, {
+                      name: toolUse.name, input: toolUse.input as Record<string, unknown>, id: toolUse.id,
+                      output: evt.output, isError: evt.isError,
+                    })
+                  }
+                }
+                allToolResults.push(apiResult)
+              }
             }
           }
         }
@@ -698,6 +744,7 @@ class AgentImpl implements Agent {
     }
 
     // Max turns reached
+    await fireNotify(this.config.onMaxTurns, buildHookContext(undefined, turnCount, messages))
     const lastText = extractLastAssistantText(messages)
     yield {
       type: 'result',
@@ -708,6 +755,7 @@ class AgentImpl implements Agent {
         stopReason: `max_turns (${maxTurns})`,
         numTurns: turnCount,
         durationMs: Date.now() - startTime,
+        costUSD: costTracker.total,
         queryTracking,
       },
     }

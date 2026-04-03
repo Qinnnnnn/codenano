@@ -44,6 +44,8 @@ import { microcompact } from './microcompact.js'
 import { createMemoryExtractor } from './memory/index.js'
 import { getMemorySection } from './prompt/sections/memory.js'
 import { appendEntry, loadSession } from './session-storage.js'
+import { buildHookContext, fireNotify, firePreToolUse, firePostToolUse, fireError, fireCompact } from './hooks.js'
+import { CostTracker } from './cost-tracker.js'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -118,6 +120,9 @@ export class SessionImpl implements Session {
         useForkedAgent: config.memory?.useForkedAgent,
       })
     }
+
+    // Fire onSessionStart hook
+    fireNotify(config.onSessionStart, buildHookContext(this._sessionId, 0, this.messages))
   }
 
   private async getSystemPrompt(): Promise<string> {
@@ -229,6 +234,7 @@ export class SessionImpl implements Session {
       cacheCreationInputTokens: 0,
       cacheReadInputTokens: 0,
     }
+    const costTracker = new CostTracker()
 
     // Initialize or increment query tracking
     const queryTracking: QueryTracking = this.queryTracking
@@ -265,6 +271,9 @@ export class SessionImpl implements Session {
 
       yield { type: 'turn_start', turnNumber: turnCount }
 
+      // ── onTurnStart hook ──────────────────────────────────────────
+      await fireNotify(this.config.onTurnStart, buildHookContext(this._sessionId, turnCount, this.messages))
+
       // ── Snip old messages (fast, zero-cost) ────────────────────────
       const snipResult = snipIfNeeded(this.messages)
       if (snipResult.snipped) {
@@ -280,6 +289,7 @@ export class SessionImpl implements Session {
       // ── Auto-compact check ──────────────────────────────────────────
       if (this.config.autoCompact !== false && lastUsage) {
         if (shouldAutoCompact(this.messages, this.config, lastUsage)) {
+          const messagesBefore = this.messages.length
           const compacted = await compactMessages(
             this.messages,
             systemPrompt,
@@ -290,6 +300,7 @@ export class SessionImpl implements Session {
           if (compacted) {
             this.messages = compacted
             hasAttemptedCompact = true
+            await fireCompact(this.config.onCompact, buildHookContext(this._sessionId, turnCount, this.messages), messagesBefore, this.messages.length)
           }
         }
       }
@@ -385,15 +396,16 @@ export class SessionImpl implements Session {
       }
 
       if (modelError) {
-        yield {
-          type: 'error',
-          error: modelError instanceof Error ? modelError : new Error(String(modelError)),
-        }
+        const err = modelError instanceof Error ? modelError : new Error(String(modelError))
+        await fireError(this.config.onError, buildHookContext(this._sessionId, turnCount, this.messages), err)
+        yield { type: 'error', error: err }
         break
       }
 
       if (!modelResult) {
-        yield { type: 'error', error: new Error('Model call produced no result') }
+        const err = new Error('Model call produced no result')
+        await fireError(this.config.onError, buildHookContext(this._sessionId, turnCount, this.messages), err)
+        yield { type: 'error', error: err }
         break
       }
 
@@ -402,6 +414,7 @@ export class SessionImpl implements Session {
       totalUsage.outputTokens += modelResult.usage.outputTokens
       totalUsage.cacheCreationInputTokens += modelResult.usage.cacheCreationInputTokens
       totalUsage.cacheReadInputTokens += modelResult.usage.cacheReadInputTokens
+      costTracker.add(this.activeModel, modelResult.usage)
       lastStopReason = modelResult.stopReason ?? 'end_turn'
 
       this.messages.push({
@@ -471,6 +484,7 @@ export class SessionImpl implements Session {
                 stopReason: 'stop_hook_prevented',
                 numTurns: turnCount,
                 durationMs: Date.now() - startTime,
+                costUSD: costTracker.total,
                 queryTracking,
               },
             }
@@ -492,6 +506,7 @@ export class SessionImpl implements Session {
                   stopReason: 'hook_retry_limit',
                   numTurns: turnCount,
                   durationMs: Date.now() - startTime,
+                  costUSD: costTracker.total,
                   queryTracking,
                 },
               }
@@ -524,6 +539,7 @@ export class SessionImpl implements Session {
             stopReason: lastStopReason,
             numTurns: turnCount,
             durationMs: Date.now() - startTime,
+            costUSD: costTracker.total,
             queryTracking,
           },
         }
@@ -534,59 +550,92 @@ export class SessionImpl implements Session {
       yield { type: 'turn_end', stopReason: 'tool_use', turnNumber: turnCount }
 
       const allToolResults: ContentBlockParam[] = []
+      const hookCtx = buildHookContext(this._sessionId, turnCount, this.messages)
 
       if (streamingExecutor) {
         for await (const result of streamingExecutor.getRemainingResults()) {
           allToolResults.push(result.apiResult)
           yield result.event
+          if (result.event.type === 'tool_result') {
+            await firePostToolUse(this.config, hookCtx, {
+              name: result.event.toolUseId, input: {}, id: result.event.toolUseId,
+              output: result.event.output, isError: result.event.isError,
+            })
+          }
         }
       } else {
         const batches = partitionToolCalls(toolUseBlocks, this.toolMap)
 
         for (const batch of batches) {
           if (batch.isConcurrencySafe && batch.blocks.length > 1) {
+            const allowedBlocks: typeof batch.blocks = []
             for (const toolUse of batch.blocks) {
-              const tool = this.toolMap.get(toolUse.name)
-              if (tool) {
-                const parsed = tool.input.safeParse(toolUse.input)
-                if (parsed.success) {
-                  yield {
-                    type: 'tool_use',
-                    toolName: toolUse.name,
-                    toolUseId: toolUse.id,
-                    input: parsed.data,
+              const blockReason = await firePreToolUse(this.config, hookCtx, {
+                name: toolUse.name, input: toolUse.input as Record<string, unknown>, id: toolUse.id,
+              })
+              if (blockReason) {
+                const blockedResult: ContentBlockParam = {
+                  type: 'tool_result', tool_use_id: toolUse.id,
+                  content: `Tool blocked: ${blockReason}`, is_error: true,
+                } as ContentBlockParam
+                allToolResults.push(blockedResult)
+                yield { type: 'tool_result', toolUseId: toolUse.id, output: `Tool blocked: ${blockReason}`, isError: true }
+              } else {
+                allowedBlocks.push(toolUse)
+                const tool = this.toolMap.get(toolUse.name)
+                if (tool) {
+                  const parsed = tool.input.safeParse(toolUse.input)
+                  if (parsed.success) {
+                    yield { type: 'tool_use', toolName: toolUse.name, toolUseId: toolUse.id, input: parsed.data }
                   }
                 }
               }
             }
 
-            const concurrencyCap = Math.min(batch.blocks.length, 10)
-            const results = await executeBatchConcurrently(
-              batch.blocks,
-              this.toolMap,
-              this.config,
-              this.abortController.signal,
-              this.messages,
-              concurrencyCap,
-              enableBudget,
-            )
-
-            for (const r of results) {
-              allToolResults.push(r.apiResult)
-              yield r.event
+            if (allowedBlocks.length > 0) {
+              const concurrencyCap = Math.min(allowedBlocks.length, 10)
+              const results = await executeBatchConcurrently(
+                allowedBlocks, this.toolMap, this.config, this.abortController.signal,
+                this.messages, concurrencyCap, enableBudget,
+              )
+              for (const r of results) {
+                allToolResults.push(r.apiResult)
+                yield r.event
+                if (r.event.type === 'tool_result') {
+                  await firePostToolUse(this.config, hookCtx, {
+                    name: r.event.toolUseId, input: {}, id: r.event.toolUseId,
+                    output: r.event.output, isError: r.event.isError,
+                  })
+                }
+              }
             }
           } else {
             for (const toolUse of batch.blocks) {
-              const { apiResult, events } = await executeSingleTool(
-                toolUse,
-                this.toolMap,
-                this.config,
-                this.abortController.signal,
-                this.messages,
-                enableBudget,
-              )
-              for (const evt of events) yield evt
-              allToolResults.push(apiResult)
+              const blockReason = await firePreToolUse(this.config, hookCtx, {
+                name: toolUse.name, input: toolUse.input as Record<string, unknown>, id: toolUse.id,
+              })
+              if (blockReason) {
+                const blockedResult: ContentBlockParam = {
+                  type: 'tool_result', tool_use_id: toolUse.id,
+                  content: `Tool blocked: ${blockReason}`, is_error: true,
+                } as ContentBlockParam
+                allToolResults.push(blockedResult)
+                yield { type: 'tool_result', toolUseId: toolUse.id, output: `Tool blocked: ${blockReason}`, isError: true }
+              } else {
+                const { apiResult, events } = await executeSingleTool(
+                  toolUse, this.toolMap, this.config, this.abortController.signal, this.messages, enableBudget,
+                )
+                for (const evt of events) {
+                  yield evt
+                  if (evt.type === 'tool_result') {
+                    await firePostToolUse(this.config, hookCtx, {
+                      name: toolUse.name, input: toolUse.input as Record<string, unknown>, id: toolUse.id,
+                      output: evt.output, isError: evt.isError,
+                    })
+                  }
+                }
+                allToolResults.push(apiResult)
+              }
             }
           }
         }
@@ -599,6 +648,7 @@ export class SessionImpl implements Session {
     }
 
     // Max turns reached
+    await fireNotify(this.config.onMaxTurns, buildHookContext(this._sessionId, turnCount, this.messages))
     const lastText = extractLastAssistantText(this.messages)
     yield {
       type: 'result',
@@ -609,6 +659,7 @@ export class SessionImpl implements Session {
         stopReason: `max_turns (${this.config.maxTurns ?? 30})`,
         numTurns: turnCount,
         durationMs: Date.now() - startTime,
+        costUSD: costTracker.total,
         queryTracking,
       },
     }

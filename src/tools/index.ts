@@ -78,7 +78,7 @@ export type { WebSearchInput } from './WebSearchTool.js'
 export { LSPTool } from './LSPTool.js'
 export type { LSPInput } from './LSPTool.js'
 
-export { AgentTool } from './AgentTool.js'
+export { AgentTool, createAgentTool } from './AgentTool.js'
 export type { AgentToolInput } from './AgentTool.js'
 
 export { AskUserTool } from './AskUserTool.js'

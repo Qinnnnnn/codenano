@@ -37,6 +37,18 @@ export type { Memory, MemoryType, MemoryConfig } from './memory/index.js'
 export { listSessions, loadSession, getSessionStorageDir } from './session-storage.js'
 export type { TranscriptEntry, SessionMetadata, SessionPersistConfig, LoadedSession } from './session-storage.js'
 
+// ── Cost Tracking ──────────────────────────────────────────────────────────
+export { CostTracker, calculateCostUSD, getModelPricing } from './cost-tracker.js'
+export type { CostSummary, ModelPricing } from './cost-tracker.js'
+
+// ── Git Integration ────────────────────────────────────────────────────────
+export { getGitState, findGitRoot, buildGitPromptSection } from './git.js'
+export type { GitState } from './git.js'
+
+// ── Context Analysis ───────────────────────────────────────────────────────
+export { analyzeContext, classifyTool, isCollapsible } from './context-analysis.js'
+export type { ContextAnalysis, ToolCategory } from './context-analysis.js'
+
 // ── Prompt system ──────────────────────────────────────────────────────────
 export {
   // Builder
@@ -118,6 +130,7 @@ export {
   WebSearchTool,
   LSPTool,
   AgentTool as AgentToolDef,
+  createAgentTool,
   AskUserTool,
   SkillTool,
 } from './tools/index.js'
@@ -190,6 +203,13 @@ export type {
   // Hooks
   StopHookFn,
   StopHookResult,
+  HookContext,
+  PreToolUseHookFn,
+  PreToolUseResult,
+  PostToolUseHookFn,
+  NotifyHookFn,
+  ErrorHookFn,
+  CompactHookFn,
 
   // Query tracking
   QueryTracking,
