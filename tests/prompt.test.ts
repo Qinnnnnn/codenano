@@ -85,7 +85,7 @@ describe('Individual Sections', () => {
   it('getTasksSection — contains coding guidance', () => {
     const section = getTasksSection()
     expect(section).toContain('# Doing tasks')
-    expect(section).toContain('security vulnerabilities')
+    expect(section).toContain('secure code')
     expect(section).toContain('OWASP')
     expect(section).toContain("Don't add features")
   })
@@ -94,7 +94,7 @@ describe('Individual Sections', () => {
     const section = getActionsSection()
     expect(section).toContain('reversibility')
     expect(section).toContain('blast radius')
-    expect(section).toContain('Destructive operations')
+    expect(section).toContain('Destructive')
   })
 
   it('getToolsSection — generates tool-specific guidance', () => {

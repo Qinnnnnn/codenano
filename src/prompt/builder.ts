@@ -25,7 +25,6 @@ import { getEfficiencySection } from './sections/efficiency.js'
 import { getEnvironmentSection } from './sections/environment.js'
 import { getLanguageSection } from './sections/language.js'
 import { getOutputStyleSection } from './sections/outputStyle.js'
-import { getMemorySection } from './sections/memory.js'
 import { SUMMARIZE_TOOL_RESULTS_SECTION } from './sections/custom.js'
 import type { ToolDef } from '../types.js'
 
@@ -114,8 +113,7 @@ export async function buildSystemPrompt(config: PromptConfig): Promise<SystemPro
     systemPromptSection('env_info', () => getEnvironmentSection(model, environment)),
     systemPromptSection('language', () => getLanguageSection(language)),
     systemPromptSection('output_style', () => getOutputStyleSection(outputStyle)),
-    systemPromptSection('memory', () => getMemorySection(memoryDir)),
-    systemPromptSection('summarize_tool_results', () => SUMMARIZE_TOOL_RESULTS_SECTION),
+    // Memory is appended separately in getSystemPrompt() to survive custom prompt overrides
     // Include any developer-provided custom sections
     ...customSections,
   ]
@@ -127,6 +125,8 @@ export async function buildSystemPrompt(config: PromptConfig): Promise<SystemPro
     [
       // Static content (cacheable)
       ...staticSections,
+      // Static constant (no memoization needed)
+      SUMMARIZE_TOOL_RESULTS_SECTION,
       // Cache boundary marker
       ...(useCacheBoundary ? [SYSTEM_PROMPT_DYNAMIC_BOUNDARY] : []),
       // Dynamic content (session-specific)
