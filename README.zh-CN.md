@@ -223,6 +223,33 @@ classifyTool('Grep')   // 'search'
 classifyTool('Bash')   // 'execute'
 ```
 
+### 技能系统？从磁盘加载。
+
+技能是 Markdown 文件 + YAML frontmatter — 与 Claude Code 格式一致：
+
+```typescript
+import { loadSkills, createSkillTool, createAgent } from 'codenano'
+
+const skills = loadSkills()  // 从 .claude/skills/ 加载
+const skillTool = createSkillTool(skills)
+
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  tools: [skillTool],  // 模型可以通过 Skill 工具调用技能
+})
+```
+
+技能文件格式 (`.claude/skills/my-skill/SKILL.md`):
+```markdown
+---
+name: review-pr
+description: 审查 Pull Request
+arguments: [pr_number]
+context: inline
+---
+审查 PR #$pr_number。关注 bug 和安全问题。
+```
+
 ### MCP 协议？支持。
 
 连接任何 MCP server，使用其工具：

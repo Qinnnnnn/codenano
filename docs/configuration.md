@@ -139,6 +139,73 @@ classifyTool('Read')  // 'read'
 classifyTool('Bash')  // 'execute'
 ```
 
+## Skill System
+
+Load skills from Markdown files with YAML frontmatter — same format as Claude Code.
+
+**Skill file format** (`.claude/skills/<name>/SKILL.md`):
+```markdown
+---
+name: review-pr
+description: Review a pull request for issues
+arguments: [pr_number]
+allowed-tools: [Read, Grep, Bash]
+context: inline
+---
+
+Review PR #$pr_number. Focus on:
+1. Code quality and bugs
+2. Security vulnerabilities
+3. Test coverage
+```
+
+**Frontmatter fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Skill name (used in `/skill-name` and SkillTool) |
+| `description` | string | One-line description |
+| `arguments` | string[] | Named arguments (`$arg_name` in content) |
+| `allowed-tools` | string[] | Tools the skill can use |
+| `context` | `'inline'` \| `'fork'` | Execution mode (default: inline) |
+| `model` | string | Model override for fork mode |
+
+**Usage:**
+```typescript
+import { loadSkills, createSkillTool, createAgent, coreTools } from 'codenano'
+
+// Load skills from directories
+const skills = loadSkills(['.claude/skills', '~/.claude/skills'])
+
+// Create a functional SkillTool
+const skillTool = createSkillTool(skills, agentConfig)
+
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  tools: [...coreTools(), skillTool],
+})
+
+// The model can now invoke: Skill({ skill: 'review-pr', args: '42' })
+```
+
+**Execution modes:**
+- `inline` (default): Skill content expands into the conversation. The model sees the prompt and continues.
+- `fork`: Skill runs in an isolated sub-agent. Requires `parentConfig` in `createSkillTool()`.
+
+**Variable substitution:**
+- `$arg_name` → replaced with positional argument values
+- `$ARGUMENTS` → replaced with the full args string
+- `${CLAUDE_SKILL_DIR}` → replaced with the skill's directory path
+
+**Standalone API:**
+```typescript
+import { parseSkillFile, discoverSkillFiles, expandSkillContent } from 'codenano'
+
+const skill = parseSkillFile('.claude/skills/review/SKILL.md')
+const files = discoverSkillFiles(['.claude/skills'])
+const expanded = expandSkillContent(skill, '42')
+```
+
 ## MCP Protocol
 
 Connect to MCP (Model Context Protocol) servers and use their tools. Supports stdio, SSE, and streamable HTTP transports.

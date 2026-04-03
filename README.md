@@ -226,6 +226,36 @@ classifyTool('Grep')   // 'search'
 classifyTool('Bash')   // 'execute'
 ```
 
+### Skills? Load from disk.
+
+Skills are Markdown files with YAML frontmatter — same format as Claude Code:
+
+```typescript
+import { loadSkills, createSkillTool, createAgent } from 'codenano'
+
+// Load skills from .claude/skills/ directories
+const skills = loadSkills()
+
+// Create a functional SkillTool
+const skillTool = createSkillTool(skills)
+
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  tools: [skillTool],  // model can invoke skills via the Skill tool
+})
+```
+
+Skill file format (`.claude/skills/my-skill/SKILL.md`):
+```markdown
+---
+name: review-pr
+description: Review a pull request
+arguments: [pr_number]
+context: inline
+---
+Review PR #$pr_number. Focus on bugs and security.
+```
+
 ### MCP protocol? Supported.
 
 Connect to any MCP server and use its tools:

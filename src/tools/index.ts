@@ -84,7 +84,7 @@ export type { AgentToolInput } from './AgentTool.js'
 export { AskUserTool } from './AskUserTool.js'
 export type { AskUserInput } from './AskUserTool.js'
 
-export { SkillTool } from './SkillTool.js'
+export { SkillTool, createSkillTool } from './SkillTool.js'
 export type { SkillInput } from './SkillTool.js'
 
 // ── Presets ─────────────────────────────────────────────────────────────────

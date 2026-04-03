@@ -62,6 +62,10 @@ export {
 } from './mcp.js'
 export type { MCPServerConfig, MCPConnection } from './mcp.js'
 
+// ── Skills ─────────────────────────────────────────────────────────────────
+export { parseSkillFile, discoverSkillFiles, loadSkills, expandSkillContent, parseFrontmatter } from './skills.js'
+export type { SkillDef } from './skills.js'
+
 // ── Prompt system ──────────────────────────────────────────────────────────
 export {
   // Builder
@@ -146,6 +150,7 @@ export {
   createAgentTool,
   AskUserTool,
   SkillTool,
+  createSkillTool,
 } from './tools/index.js'
 
 // ── Compact / Token Management ────────────────────────────────────────────
