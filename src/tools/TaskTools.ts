@@ -1,7 +1,7 @@
 /**
  * Task Tools — Create, update, get, list, and stop tasks.
  *
- * Extracted from codenano:
+ * Inspired by Claude Code architecture
  *   src/tools/TaskCreateTool/TaskCreateTool.ts
  *   src/tools/TaskUpdateTool/TaskUpdateTool.ts
  *   src/tools/TaskGetTool/TaskGetTool.ts

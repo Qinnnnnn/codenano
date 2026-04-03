@@ -1,7 +1,7 @@
 /**
  * BriefTool — Send a message to the user.
  *
- * Extracted from codenano: src/tools/BriefTool/BriefTool.ts
+ * Inspired by Claude Code architecture
  *
  * In codenano, this renders a message in the terminal UI.
  * In the SDK, it simply returns the message as output.

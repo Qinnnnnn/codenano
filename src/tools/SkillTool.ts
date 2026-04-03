@@ -1,7 +1,7 @@
 /**
  * SkillTool — Invoke saved skills (slash commands).
  *
- * Extracted from codenano: src/tools/SkillTool/SkillTool.ts
+ * Inspired by Claude Code architecture
  *
  * Now functional: createSkillTool() creates a SkillTool that can invoke
  * loaded skills. Skills expand inline or fork as sub-agents.

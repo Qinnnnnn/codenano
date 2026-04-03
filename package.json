@@ -37,12 +37,14 @@
   "keywords": [
     "ai",
     "agent",
-    "claude",
-    "anthropic",
+    "coding-agent",
+    "ai-coding",
     "coding-assistant",
     "llm",
     "sdk",
-    "typescript"
+    "typescript",
+    "anthropic",
+    "claude"
   ],
   "author": "Adam Li",
   "license": "MIT",

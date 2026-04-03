@@ -1,7 +1,7 @@
 /**
  * agent-core — SDK for building AI coding agents
  *
- * Extracted from codenano's core Agent loop architecture.
+ * Inspired by Claude Code's production agent architecture.
  *
  * @example
  * ```typescript

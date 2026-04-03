@@ -1,7 +1,7 @@
 /**
  * FileWriteTool — Create or overwrite files.
  *
- * Extracted from codenano: src/tools/FileWriteTool/FileWriteTool.ts
+ * Inspired by Claude Code architecture
  */
 
 import { z } from 'zod'

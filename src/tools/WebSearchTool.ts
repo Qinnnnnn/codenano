@@ -1,7 +1,7 @@
 /**
  * WebSearchTool — Search the web.
  *
- * Extracted from codenano: src/tools/WebSearchTool/WebSearchTool.ts
+ * Inspired by Claude Code architecture
  *
  * Note: This is a stub implementation. In codenano, web search uses
  * Anthropic's server-side web search API. SDK users should provide their

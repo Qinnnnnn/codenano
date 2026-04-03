@@ -1,6 +1,6 @@
-# Gap Analysis: codenano vs Claude Code
+# Gap Analysis: codenano Architecture
 
-This codenano SDK captures Claude Code's core agent loop in ~8,000 lines (vs ~150,000+).
+This SDK implements production-grade agent patterns inspired by AI coding systems. ~8,000 lines of focused code implementing the core agent loop, tool execution, and production hardening features.
 
 ## What's Equivalent
 

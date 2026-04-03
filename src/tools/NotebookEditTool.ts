@@ -1,7 +1,7 @@
 /**
  * NotebookEditTool — Edit Jupyter notebook cells (.ipynb).
  *
- * Extracted from codenano: src/tools/NotebookEditTool/NotebookEditTool.ts
+ * Inspired by Claude Code architecture
  */
 
 import { z } from 'zod'

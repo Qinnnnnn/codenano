@@ -1,7 +1,7 @@
 /**
  * AgentTool — Spawn sub-agents for parallel or complex tasks.
  *
- * Extracted from codenano: src/tools/AgentTool/AgentTool.tsx
+ * 受 Claude Code 设计灵感启发
  *
  * Now functional: spawns a child agent via createAgent() with the parent's
  * tools and a scoped system prompt. Inspired by Claude Code's forkSubagent pattern.

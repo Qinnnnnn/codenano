@@ -5,27 +5,27 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-374%20passing-brightgreen.svg)](https://github.com/Adamlixi/codenano)
 
-**The lightweight AI coding agent SDK extracted from Claude Code.**
+**The lightweight AI coding agent SDK inspired by production agent architecture.**
 
-Built by extracting Claude Code's production architecture. All the power, none of the bloat. Open source, fully customizable, production-ready.
+Built with battle-tested patterns from production AI coding systems. ~8,000 lines of focused code, zero bloat. Open source, fully customizable, production-ready.
 
-> 💡 **Based on Claude Code** — The same battle-tested engine that powers Anthropic's official coding assistant, now available as a standalone SDK.
+> 💡 **Production-Grade Patterns** — Agent loop architecture inspired by real-world AI coding assistants, now available as a standalone SDK.
 
 ## Why codenano?
 
-### 🚀 **Claude Code's Core, 96% Lighter**
-- **~6,500 lines** of pure, focused code
-- Claude Code: 150,000+ lines (IDE integration, UI, etc.)
-- **Same agent engine, zero overhead**
+### 🚀 **Lightweight & Focused**
+- **~8,000 lines** of pure, focused code
+- Zero bloat, zero overhead
+- **Production-grade agent engine**
 
-### ⚡ **What Claude Code Does, You Can Do**
+### ⚡ **Build AI Coding Agents Fast**
 ```bash
 npm install codenano
 ```
-Build your own Claude Code in 60 seconds. No IDE required. No restrictions.
+Build your own AI coding agent in 60 seconds. No IDE required. No restrictions.
 
 ### 🎯 **Battle-Tested Architecture**
-Extracted from Claude Code's production engine. Proven at scale, optimized for developers.
+Production-grade agent patterns. Proven at scale, optimized for developers.
 
 ---
 
@@ -228,7 +228,7 @@ classifyTool('Bash')   // 'execute'
 
 ### Skills? Load from disk.
 
-Skills are Markdown files with YAML frontmatter — same format as Claude Code:
+Skills are Markdown files with YAML frontmatter:
 
 ```typescript
 import { loadSkills, createSkillTool, createAgent } from 'codenano'
@@ -296,36 +296,26 @@ const agent = createAgent({
 
 ---
 
-## codenano vs Claude Code
+## codenano vs Other Frameworks
 
-**Same engine. Different philosophy.**
+**Lightweight, production-grade, inspired by battle-tested patterns.**
 
-| Feature | codenano | Claude Code |
-|---------|----------|-------------|
-| **Based On** | Claude Code core | Official Anthropic product |
-| **Lines of Code** | ~6,500 (core only) | 150,000+ (full app) |
-| **What's Included** | Agent engine | Engine + IDE + UI |
-| **Setup Time** | < 1 minute | Install IDE extension |
-| **Use Case** | Build custom agents | Use as-is in IDE |
-| **Customizable** | ✅ Fully open | ⚠️ Closed source |
-| **Standalone** | ✅ Yes | ❌ Requires IDE |
-| **Production Ready** | ✅ Yes | ✅ Yes |
-| **Open Source** | ✅ MIT License | ❌ Proprietary |
-
-**Think of it this way:**
-- **Claude Code** = Complete car (engine + body + interior)
-- **codenano** = Just the engine (build your own car)
+| Feature | codenano | Vercel AI SDK | LangChain |
+|---------|----------|---------------|-----------|
+| **Philosophy** | Inspired by production AI coding systems | General-purpose AI SDK | General agent framework |
+| **Lines of Code** | ~8,000 (focused) | ~15,000+ | 100,000+ |
+| **What's Included** | Agent engine + 17 tools | Multi-model + streaming | Everything + kitchen sink |
+| **Setup Time** | < 1 minute | < 1 minute | 10+ minutes |
+| **Use Case** | Build coding agents | Build any AI app | Build complex workflows |
+| **Production Hardening** | ✅ Full (compaction, recovery, budgeting) | ⚠️ Basic | ⚠️ Basic |
+| **Streaming Tool Execution** | ✅ Yes | ❌ No | ❌ No |
+| **Open Source** | ✅ MIT License | ✅ Apache 2.0 | ✅ MIT License |
 
 **When to use codenano:**
-- Building custom AI coding tools
-- Integrating agents into your product
-- Need full control over behavior
-- Want to understand how it works
-
-**When to use Claude Code:**
-- Just want to code with AI assistance
-- Prefer official Anthropic support
-- Happy with IDE integration
+- Building AI coding tools or agents
+- Need production-grade reliability (auto-compact, 413 recovery, tool budgeting)
+- Want lightweight, focused architecture
+- Prefer battle-tested patterns over experimental features
 
 ---
 

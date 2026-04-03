@@ -1,7 +1,7 @@
 /**
  * BashTool — Execute shell commands.
  *
- * Extracted from codenano: src/tools/BashTool/BashTool.tsx
+ * 受 Claude Code 设计灵感启发
  *
  * Simplified: no sandbox, no background tasks, no sed-edit preview.
  * For production use, wrap this with permission checks and sandboxing.

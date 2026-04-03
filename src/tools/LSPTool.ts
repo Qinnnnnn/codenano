@@ -1,7 +1,7 @@
 /**
  * LSPTool — Code intelligence via Language Server Protocol.
  *
- * Extracted from codenano: src/tools/LSPTool/LSPTool.ts
+ * Inspired by Claude Code architecture
  *
  * Note: This is a schema-only stub. The actual LSP implementation requires
  * a running language server. SDK users should provide their own LSP client
