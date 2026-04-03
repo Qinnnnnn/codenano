@@ -49,7 +49,7 @@ This codenano SDK captures Claude Code's core agent loop in ~6,500 lines (vs ~15
 |-----|-------------|-----|--------|
 | **Hook system** | 16 event types: PreToolUse, PostToolUse, SessionStart, etc. | 8 lifecycle hooks: onTurnStart, onPreToolUse (blocking), onPostToolUse, onCompact, onError, onMaxTurns, onSessionStart, onTurnEnd | Core hooks implemented, no shell/http/agent hook executors |
 | **Memory system** | Auto-extract learnings, auto-dream consolidation, 4 memory types | Implemented: save/load/scan/extract with forked agent support | Core memory works, no auto-dream consolidation |
-| **MCP protocol** | Full MCP client: auth, resources, tools, elicitation | None | No tool marketplace integration |
+| **MCP protocol** | Full MCP client: auth, resources, tools, elicitation | `connectMCPServer()` with stdio/SSE/HTTP transports, `mcpToolsToToolDefs()` auto-wrapping | Core tool integration works, no OAuth/resources/elicitation |
 | **Sub-agent spawning** | `AgentTool` -> `runForkedAgent()` with shared prompt cache | `createAgentTool(parentConfig)` spawns child agents with inherited tools | Works, no fork/worktree/prompt-cache sharing |
 | **Permission rules** | Source-layered rules, always-allow/deny lists, bash classifier | Callback only + onPreToolUse blocking | SDK users must build their own rule engine |
 

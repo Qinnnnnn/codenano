@@ -226,6 +226,24 @@ classifyTool('Grep')   // 'search'
 classifyTool('Bash')   // 'execute'
 ```
 
+### MCP protocol? Supported.
+
+Connect to any MCP server and use its tools:
+
+```typescript
+import { createAgent, connectMCPServers } from 'codenano'
+
+const { tools, connections } = await connectMCPServers([
+  { name: 'github', transport: 'stdio', command: 'npx', args: ['-y', '@modelcontextprotocol/server-github'] },
+])
+
+const agent = createAgent({ model: 'claude-sonnet-4-6', tools })
+const result = await agent.ask('List open issues')
+
+// Cleanup
+await disconnectAll(connections)
+```
+
 ### Custom Tools
 
 ```typescript
@@ -381,9 +399,9 @@ ANTHROPIC_API_KEY=sk-xxx npm run test:integration
 - [x] Git integration (state detection, prompt injection)
 - [x] Sub-agent spawning (createAgentTool)
 - [x] Context collapse (tool classification, context analysis)
+- [x] MCP protocol support (stdio/SSE/HTTP transports)
 
-**Coming Soon:**
-- [ ] MCP protocol support
+**Roadmap complete!**
 
 ---
 

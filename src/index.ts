@@ -49,6 +49,19 @@ export type { GitState } from './git.js'
 export { analyzeContext, classifyTool, isCollapsible } from './context-analysis.js'
 export type { ContextAnalysis, ToolCategory } from './context-analysis.js'
 
+// ── MCP Protocol ───────────────────────────────────────────────────────────
+export {
+  connectMCPServer,
+  connectMCPServers,
+  mcpToolsToToolDefs,
+  listMCPTools,
+  callMCPTool,
+  disconnectAll,
+  buildMCPToolName,
+  parseMCPToolName,
+} from './mcp.js'
+export type { MCPServerConfig, MCPConnection } from './mcp.js'
+
 // ── Prompt system ──────────────────────────────────────────────────────────
 export {
   // Builder

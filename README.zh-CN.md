@@ -223,6 +223,21 @@ classifyTool('Grep')   // 'search'
 classifyTool('Bash')   // 'execute'
 ```
 
+### MCP 协议？支持。
+
+连接任何 MCP server，使用其工具：
+
+```typescript
+import { createAgent, connectMCPServers } from 'codenano'
+
+const { tools, connections } = await connectMCPServers([
+  { name: 'github', transport: 'stdio', command: 'npx', args: ['-y', '@modelcontextprotocol/server-github'] },
+])
+
+const agent = createAgent({ model: 'claude-sonnet-4-6', tools })
+const result = await agent.ask('列出未关闭的 issue')
+```
+
 ### 自定义工具
 
 ```typescript
@@ -410,9 +425,9 @@ ANTHROPIC_API_KEY=sk-xxx npm run test:integration
 - [x] Git 集成（状态检测、提示注入）
 - [x] 子代理生成（createAgentTool）
 - [x] 上下文折叠（工具分类、上下文分析）
+- [x] MCP 协议支持（stdio/SSE/HTTP 传输）
 
-**即将推出：**
-- [ ] MCP 协议支持
+**路线图已全部完成！**
 
 ---
 

@@ -138,6 +138,71 @@ classifyTool('Grep')  // 'search'
 classifyTool('Read')  // 'read'
 classifyTool('Bash')  // 'execute'
 ```
+
+## MCP Protocol
+
+Connect to MCP (Model Context Protocol) servers and use their tools. Supports stdio, SSE, and streamable HTTP transports.
+
+```typescript
+import { createAgent, connectMCPServers, disconnectAll } from 'codenano'
+
+// Connect to MCP servers
+const { tools, connections } = await connectMCPServers([
+  {
+    name: 'github',
+    transport: 'stdio',
+    command: 'npx',
+    args: ['-y', '@modelcontextprotocol/server-github'],
+    env: { GITHUB_TOKEN: 'ghp_...' },
+  },
+  {
+    name: 'slack',
+    transport: 'sse',
+    url: 'https://mcp.slack.com/sse',
+    headers: { Authorization: 'Bearer xoxb-...' },
+  },
+])
+
+// MCP tools are auto-prefixed: mcp__github__list_issues, mcp__slack__search_messages
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  tools: [...coreTools(), ...tools],  // combine with built-in tools
+})
+
+const result = await agent.ask('List open issues and post a summary to #dev')
+
+// Cleanup connections on shutdown
+await disconnectAll(connections)
+```
+
+**Transport types:**
+
+| Transport | Config | Use Case |
+|-----------|--------|----------|
+| `stdio` | `command`, `args`, `env` | Local CLI tools (npx, python, etc.) |
+| `sse` | `url`, `headers` | Remote servers with SSE |
+| `http` | `url`, `headers` | Remote servers with streamable HTTP |
+
+**Standalone API:**
+
+```typescript
+import { connectMCPServer, listMCPTools, mcpToolsToToolDefs, callMCPTool } from 'codenano'
+
+// Connect to a single server
+const conn = await connectMCPServer({ name: 'fs', transport: 'stdio', command: 'npx', args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'] })
+
+// List available tools
+const tools = await listMCPTools(conn)
+
+// Call a tool directly
+const result = await callMCPTool(conn, 'read_file', { path: '/tmp/hello.txt' })
+
+// Convert to ToolDefs for use with createAgent
+const toolDefs = await mcpToolsToToolDefs(conn)
+
+// Cleanup
+await conn.close()
+```
 ```
 
 ## Provider Auto-Detection

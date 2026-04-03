@@ -145,6 +145,12 @@ export interface AgentConfig {
   streamingToolExecution?: boolean
 
   /**
+   * MCP servers to connect to.
+   * Tools from these servers become available to the agent with prefixed names (mcp__<server>__<tool>).
+   */
+  mcpServers?: import('./mcp.js').MCPServerConfig[]
+
+  /**
    * Session persistence configuration.
    * When enabled, session messages are saved to JSONL files and can be resumed later.
    */
