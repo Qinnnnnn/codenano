@@ -1,6 +1,6 @@
 # System Prompt Architecture
 
-The prompt system is faithfully reproduced from codenano's internal architecture. It composes a system prompt from independent, cacheable sections.
+The prompt system is faithfully reproduced from Claude Code's internal architecture. It composes a system prompt from independent, cacheable sections.
 
 ## Section Layout
 
@@ -19,15 +19,20 @@ The prompt system is faithfully reproduced from codenano's internal architecture
 |  +-- Environment (cwd, platform)    |
 |  +-- Language (if set)              |
 |  +-- Output Style (if set)          |
+|  +-- Memory (if autoLoad enabled)   |
 |  +-- Custom Sections (developer)    |
-+--- CLAUDE.md (opt-in) --------------+
-|  +-- Project/user instructions      |
++--- INSTRUCTIONS (opt-in) -----------+
+|  +-- CLAUDE.md project instructions |
++--- CONTEXT (auto-injected) ---------+
+|  +-- Memory (loaded memories)       |
+|  +-- Git state (if detected)        |
+|  +-- Skills (if loaded, via tools)  |
 +-------------------------------------+
 ```
 
 ## Static Sections
 
-These are built once and cached for the lifetime of the agent:
+Built once and cached for the lifetime of the agent:
 
 | Section | Content |
 |---------|---------|
@@ -48,7 +53,36 @@ Rebuilt each turn to reflect current state:
 | **environment** | cwd, platform, model, git status |
 | **language** | Response language preference (if set) |
 | **outputStyle** | Custom output style configuration (if set) |
+| **memory** | Loaded memories from memory system (if `autoLoad` enabled) |
 | **custom** | Developer-provided custom sections |
+
+## Context Injections
+
+Additional context injected into the system prompt based on configuration:
+
+| Source | When | How |
+|--------|------|-----|
+| **CLAUDE.md** | `autoLoadInstructions: true` | Appended after all sections |
+| **Memory** | `memory.autoLoad: true` (default) | `getMemorySection()` injects loaded memories with type descriptions |
+| **Git** | `getGitState()` detects a repo | `buildGitPromptSection()` adds branch, commit, clean status |
+| **Skills** | Skills loaded via `createSkillTool()` | Available tools listed in SkillTool description |
+| **MCP** | MCP servers connected | MCP tools appear as `mcp__<server>__<tool>` in tool list |
+
+## Prompt Priority Chain
+
+```
+overrideSystemPrompt  ->  replaces everything (highest priority)
+    | (not set)
+systemPrompt          ->  replaces default built prompt
+    | (not set)
+buildSystemPrompt()   ->  auto-built from sections (default)
+    | (always)
+appendSystemPrompt    ->  appended at the end (always applied)
+    | (if autoLoadInstructions)
+CLAUDE.md             ->  project instructions appended
+    | (if memory.autoLoad)
+memory section        ->  loaded memories appended
+```
 
 ## Source Files
 
@@ -67,8 +101,15 @@ src/prompt/
       +-- tools.ts      #   dynamic tool usage hints
       +-- tone.ts       #   emoji rules, file references, markdown style
       +-- efficiency.ts #   output conciseness guidance
-      +-- environment.ts#   runtime info (cwd, platform, model, git status)
+      +-- environment.ts#   runtime info (cwd, platform, model)
       +-- language.ts   #   response language preference
       +-- outputStyle.ts#   custom output style configuration
+      +-- memory.ts     #   loaded memories (via getMemorySection)
       +-- custom.ts     #   developer custom sections
+
+src/memory/
+  +-- prompt.ts         # buildMemoryPrompt() — formats memories for injection
+
+src/git.ts              # buildGitPromptSection() — git state for injection
+src/skills.ts           # skill content expansion for SkillTool
 ```
