@@ -1,15 +1,14 @@
 /**
- * Unit tests for BashTool, GlobTool, GrepTool, BriefTool
+ * Unit tests for BashTool, GlobTool, GrepTool
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { BashTool } from '../src/tools/BashTool.js'
 import { GlobTool } from '../src/tools/GlobTool.js'
 import { GrepTool } from '../src/tools/GrepTool.js'
-import { BriefTool } from '../src/tools/BriefTool.js'
 
 const signal = new AbortController().signal
 const ctx = { signal, messages: [] }
@@ -114,9 +113,3 @@ describe('GrepTool', () => {
   })
 })
 
-describe('BriefTool', () => {
-  it('returns the message as-is', async () => {
-    const result = await BriefTool.execute({ message: 'Hello user!' }, ctx)
-    expect(result).toBe('Hello user!')
-  })
-})

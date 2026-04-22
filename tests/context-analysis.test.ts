@@ -23,7 +23,6 @@ describe('classifyTool', () => {
   it('classifies write tools', () => {
     expect(classifyTool('Write')).toBe('write')
     expect(classifyTool('Edit')).toBe('write')
-    expect(classifyTool('NotebookEdit')).toBe('write')
     expect(classifyTool('TaskCreate')).toBe('write')
   })
 

@@ -10,8 +10,8 @@
 export type ToolCategory = 'search' | 'read' | 'write' | 'execute' | 'other'
 
 const SEARCH_TOOLS = new Set(['Grep', 'WebSearch', 'WebFetch', 'Glob'])
-const READ_TOOLS = new Set(['Read', 'FileRead', 'TaskGet', 'TaskList', 'LSP', 'Brief'])
-const WRITE_TOOLS = new Set(['Write', 'FileWrite', 'Edit', 'FileEdit', 'NotebookEdit', 'TaskCreate', 'TaskUpdate', 'TodoWrite'])
+const READ_TOOLS = new Set(['Read', 'FileRead', 'TaskGet', 'TaskList', 'LSP'])
+const WRITE_TOOLS = new Set(['Write', 'FileWrite', 'Edit', 'FileEdit', 'TaskCreate', 'TaskUpdate', 'TodoWrite'])
 const EXECUTE_TOOLS = new Set(['Bash', 'Agent'])
 
 export function classifyTool(toolName: string): ToolCategory {

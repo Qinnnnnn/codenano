@@ -354,18 +354,18 @@ const agent = createAgent({
 
 ## 你能得到什么
 
-### 🛠️ **17 个内置工具**
+### 🛠️ **15 个内置工具**
 开箱即用，零配置：
 - **文件操作：** Read、Edit、Write
 - **代码搜索：** Glob（模式匹配）、Grep（正则搜索）
 - **执行：** Bash 命令
-- **高级：** Web 搜索、Web 获取、笔记本、LSP 等
+- **高级：** Web 搜索、Web 获取、LSP 等
 
 ### 🎨 **三种工具预设**
 ```typescript
 coreTools()      // 基础 6 个工具
 extendedTools()  // 核心 + 5 个
-allTools()       // 全部 17 个工具
+allTools()       // 全部 15 个工具
 ```
 
 ### 🔧 **生产特性**
@@ -396,7 +396,7 @@ codenano/
     cost-tracker.ts    # 成本追踪
     git.ts             # Git 状态检测
     context-analysis.ts # 工具分类与上下文分析
-    tools/             # 17 个内置工具 + createAgentTool
+    tools/             # 15 个内置工具 + createAgentTool
     prompt/            # 系统提示构建器
     memory/            # 持久化记忆系统
     provider.ts        # Anthropic SDK + Bedrock

@@ -26,9 +26,7 @@ describe('Tool presets', () => {
     expect(names).toContain('Read')
     expect(names).toContain('Bash')
     // Extended tools present
-    expect(names).toContain('NotebookEdit')
     expect(names).toContain('WebFetch')
-    expect(names).toContain('Brief')
     expect(names).toContain('TaskCreate')
     expect(names).toContain('TodoWrite')
   })

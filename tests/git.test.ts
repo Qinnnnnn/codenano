@@ -15,7 +15,10 @@ describe('findGitRoot', () => {
   it('finds git root from current directory', () => {
     const root = findGitRoot()
     expect(root).not.toBeNull()
-    expect(root).toContain('agent-core')
+    // verify it's a real git repo by checking for .git subdirectory
+    const gitDir = join(root!, '.git')
+    const { existsSync } = require('fs')
+    expect(existsSync(gitDir)).toBe(true)
   })
 
   it('returns null for non-git directory', () => {

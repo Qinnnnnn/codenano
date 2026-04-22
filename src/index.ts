@@ -131,9 +131,7 @@ export {
   GlobTool,
   GrepTool,
   BashTool,
-  NotebookEditTool,
   WebFetchTool,
-  BriefTool,
 
   // Individual tools — with default backend
   TaskCreateTool,

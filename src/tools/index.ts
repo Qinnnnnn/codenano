@@ -40,14 +40,8 @@ export type { GrepInput } from './GrepTool.js'
 export { BashTool } from './BashTool.js'
 export type { BashInput } from './BashTool.js'
 
-export { NotebookEditTool } from './NotebookEditTool.js'
-export type { NotebookEditInput } from './NotebookEditTool.js'
-
 export { WebFetchTool } from './WebFetchTool.js'
 export type { WebFetchInput } from './WebFetchTool.js'
-
-export { BriefTool } from './BriefTool.js'
-export type { BriefInput } from './BriefTool.js'
 
 // ── Default backend tools ───────────────────────────────────────────────────
 
@@ -95,9 +89,7 @@ import { FileWriteTool } from './FileWriteTool.js'
 import { GlobTool } from './GlobTool.js'
 import { GrepTool } from './GrepTool.js'
 import { BashTool } from './BashTool.js'
-import { NotebookEditTool } from './NotebookEditTool.js'
 import { WebFetchTool } from './WebFetchTool.js'
-import { BriefTool } from './BriefTool.js'
 import {
   TaskCreateTool,
   TaskUpdateTool,
@@ -122,15 +114,13 @@ export function coreTools(): ToolDef<any>[] {
 }
 
 /**
- * Extended tools — core + notebooks, web fetch, brief, tasks.
+ * Extended tools — core + web fetch, tasks, todos.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function extendedTools(): ToolDef<any>[] {
   return [
     ...coreTools(),
-    NotebookEditTool,
     WebFetchTool,
-    BriefTool,
     TaskCreateTool,
     TaskUpdateTool,
     TaskGetTool,

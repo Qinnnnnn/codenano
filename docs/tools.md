@@ -27,7 +27,7 @@ The SDK converts Zod schemas to JSON Schema via `zod-to-json-schema` for the Ant
 
 ## Built-in Tool Presets
 
-17 production-grade tools inspired by Claude Code, organized in three tiers:
+15 production-grade tools inspired by Claude Code, organized in three tiers:
 
 ```typescript
 import { createAgent, coreTools, extendedTools, allTools } from 'codenano'
@@ -35,7 +35,7 @@ import { createAgent, coreTools, extendedTools, allTools } from 'codenano'
 // Core: Read, Edit, Write, Glob, Grep, Bash
 createAgent({ model: 'claude-sonnet-4-6', tools: coreTools() })
 
-// Extended: + NotebookEdit, WebFetch, Brief, Tasks, Todos
+// Extended: + WebFetch, Tasks, Todos
 createAgent({ model: 'claude-sonnet-4-6', tools: extendedTools() })
 
 // All: + WebSearch(stub), LSP(stub), Agent(stub), AskUserQuestion(stub), Skill(stub)
@@ -52,9 +52,7 @@ createAgent({ model: 'claude-sonnet-4-6', tools: allTools() })
 | `Glob` | yes | yes | Find files by glob pattern |
 | `Grep` | yes | yes | Regex search via ripgrep (grep fallback) |
 | `Bash` | dynamic | dynamic | Shell commands, read-only detection by prefix |
-| `NotebookEdit` | no | no | Edit/insert/delete Jupyter cells |
 | `WebFetch` | yes | yes | Fetch URL and extract content |
-| `Brief` | yes | yes | Toggle brief/verbose response mode |
 
 ### Tier 2: Default Backend
 

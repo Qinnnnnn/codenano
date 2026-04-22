@@ -304,7 +304,7 @@ const agent = createAgent({
 |---------|----------|---------------|-----------|
 | **Philosophy** | Inspired by production AI coding systems | General-purpose AI SDK | General agent framework |
 | **Lines of Code** | ~8,000 (focused) | ~15,000+ | 100,000+ |
-| **What's Included** | Agent engine + 17 tools | Multi-model + streaming | Everything + kitchen sink |
+| **What's Included** | Agent engine + 15 tools | Multi-model + streaming | Everything + kitchen sink |
 | **Setup Time** | < 1 minute | < 1 minute | 10+ minutes |
 | **Use Case** | Build coding agents | Build any AI app | Build complex workflows |
 | **Production Hardening** | ✅ Full (compaction, recovery, budgeting) | ⚠️ Basic | ⚠️ Basic |
@@ -321,18 +321,18 @@ const agent = createAgent({
 
 ## What You Get
 
-### 🛠️ **17 Built-in Tools**
+### 🛠️ **15 Built-in Tools**
 Ready to use, zero configuration:
 - **File Operations:** Read, Edit, Write
 - **Code Search:** Glob (pattern matching), Grep (regex search)
 - **Execution:** Bash commands
-- **Advanced:** Web search, web fetch, notebooks, LSP, and more
+- **Advanced:** Web search, web fetch, LSP, and more
 
 ### 🎨 **Three Tool Presets**
 ```typescript
 coreTools()      // Essential 6 tools
 extendedTools()  // Core + 5 more
-allTools()       // All 17 tools
+allTools()       // All 15 tools
 ```
 
 ### 🔧 **Production Features**
@@ -363,7 +363,7 @@ codenano/
     cost-tracker.ts    # Token-based cost tracking
     git.ts             # Git state detection
     context-analysis.ts # Tool classification & context analysis
-    tools/             # 17 built-in tools + createAgentTool
+    tools/             # 15 built-in tools + createAgentTool
     prompt/            # System prompt builder
     memory/            # Persistent memory system
     provider.ts        # Anthropic SDK + Bedrock
