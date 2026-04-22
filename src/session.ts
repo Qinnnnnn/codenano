@@ -269,7 +269,7 @@ export class SessionImpl implements Session {
         break
       }
 
-      yield { type: 'turn_start', turnNumber: turnCount }
+      // Note: turn_start is yielded by toPublicEvent(message_start) inside the streaming loop below
 
       // ── onTurnStart hook ──────────────────────────────────────────
       await fireNotify(this.config.onTurnStart, buildHookContext(this._sessionId, turnCount, this.messages))
@@ -333,7 +333,9 @@ export class SessionImpl implements Session {
           maxOutputTokensOverride,
         )) {
           const publicEvent = toPublicEvent(event, turnCount)
-          if (publicEvent) yield publicEvent
+          if (publicEvent) {
+            yield publicEvent
+          }
           if (event.type === 'message_complete') modelResult = event.result
         }
 
@@ -474,7 +476,7 @@ export class SessionImpl implements Session {
           // Handle preventContinuation
           if (hookResult?.preventContinuation) {
             this.stopHookRetryCount = 0
-            yield { type: 'turn_end', stopReason: 'stop_hook_prevented', turnNumber: turnCount }
+            yield { type: 'turn_end' as const, stopReason: 'stop_hook_prevented', turnNumber: turnCount }
             yield {
               type: 'result',
               result: {
@@ -496,7 +498,7 @@ export class SessionImpl implements Session {
             if (this.stopHookRetryCount >= this.MAX_HOOK_RETRIES) {
               console.warn('Stop hook retry limit reached')
               this.stopHookRetryCount = 0
-              yield { type: 'turn_end', stopReason: 'hook_retry_limit', turnNumber: turnCount }
+              yield { type: 'turn_end' as const, stopReason: 'hook_retry_limit', turnNumber: turnCount }
               yield {
                 type: 'result',
                 result: {
@@ -527,7 +529,8 @@ export class SessionImpl implements Session {
           this.memoryExtractor.triggerExtraction(this.messages)
         }
 
-        yield { type: 'turn_end', stopReason: lastStopReason, turnNumber: turnCount }
+        // Note: turn_end(end_turn) is already yielded by toPublicEvent(message_delta)
+        // in the streaming loop above when message_delta has stopReason=end_turn
 
         const finalText = extractText(modelResult.assistantContent)
         yield {
@@ -547,7 +550,8 @@ export class SessionImpl implements Session {
       }
 
       // ── Execute tools ──────────────────────────────────────────────
-      yield { type: 'turn_end', stopReason: 'tool_use', turnNumber: turnCount }
+      // Note: turn_end(stopReason=tool_use) is already yielded by toPublicEvent
+      // in the streaming loop above when message_delta has stopReason=tool_use
 
       const allToolResults: ContentBlockParam[] = []
       const hookCtx = buildHookContext(this._sessionId, turnCount, this.messages)

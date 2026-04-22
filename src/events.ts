@@ -30,7 +30,7 @@ export function toPublicEvent(event: ModelStreamEvent, turnNumber: number): Stre
     case 'message_delta':
       if (event.stopReason) {
         return {
-          type: 'turn_end',
+          type: 'turn_end' as const,
           stopReason: event.stopReason,
           turnNumber,
         }
