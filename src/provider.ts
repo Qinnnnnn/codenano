@@ -144,6 +144,9 @@ export async function* callModelStreaming(
     switch (event.type) {
       case 'message_start': {
         messageId = event.message.id
+        if (!('content' in event.message)) {
+          (event.message as unknown as Record<string, unknown>).content = []
+        }
         const msgUsage = event.message.usage
         usage = {
           inputTokens: msgUsage?.input_tokens ?? 0,
