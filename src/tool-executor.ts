@@ -143,7 +143,11 @@ export async function executeSingleTool(
 
   // Execute
   try {
-    const context: ToolContext = { signal, messages }
+    const context: ToolContext = {
+      runtime: config.runtime,
+      signal,
+      messages,
+    }
     const rawOutput = await tool.execute(parsed.data, context)
     const output = normalizeToolOutput(rawOutput)
 
@@ -229,7 +233,11 @@ export async function executeBatchConcurrently(
     }
 
     try {
-      const context: ToolContext = { signal, messages }
+      const context: ToolContext = {
+        runtime: config.runtime,
+        signal,
+        messages,
+      }
       const rawOutput = await tool.execute(parsed.data, context)
       const output = normalizeToolOutput(rawOutput)
 

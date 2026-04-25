@@ -42,13 +42,14 @@ export function getEnvironmentSection(model: string, env?: EnvironmentInfo): str
 /**
  * Auto-detect environment info from the current process.
  * Useful as a default when no explicit env is provided.
+ * @param cwd - Override the detected working directory (useful for sandbox mode)
  */
-export function detectEnvironment(): EnvironmentInfo {
+export function detectEnvironment(cwd?: string): EnvironmentInfo {
   const shell = process.env.SHELL || 'unknown'
   const shellName = shell.includes('zsh') ? 'zsh' : shell.includes('bash') ? 'bash' : shell
 
   return {
-    cwd: process.cwd(),
+    cwd: cwd ?? process.cwd(),
     platform: process.platform,
     shell: shellName,
     osVersion: `${process.platform} ${process.version}`,

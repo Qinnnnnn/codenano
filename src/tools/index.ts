@@ -114,6 +114,32 @@ export function coreTools(): ToolDef<any>[] {
 }
 
 /**
+ * Core coding tools with sandbox support.
+ * Use when runtime.type === 'sandbox'.
+ * FileTools resolve paths through hostWorkspaceDir.
+ * CommandTools proxy through docker exec.
+ */
+import {
+  SandboxFileReadTool,
+  SandboxFileEditTool,
+  SandboxFileWriteTool,
+  SandboxGlobTool,
+  SandboxGrepTool,
+  SandboxBashTool,
+} from './sandbox/index.js'
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function sandboxCoreTools(): ToolDef<any>[] {
+  return [
+    SandboxFileReadTool,
+    SandboxFileEditTool,
+    SandboxFileWriteTool,
+    SandboxGlobTool,
+    SandboxGrepTool,
+    SandboxBashTool,
+  ]
+}
+
+/**
  * Extended tools — core + web fetch, tasks, todos.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

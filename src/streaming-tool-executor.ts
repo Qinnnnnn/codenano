@@ -226,7 +226,11 @@ export class StreamingToolExecutor {
 
     // Execute
     try {
-      const context: ToolContext = { signal: this.signal, messages: this.messages }
+      const context: ToolContext = {
+        runtime: this.config.runtime,
+        signal: this.signal,
+        messages: this.messages,
+      }
       const rawOutput = await tool.execute(parsed.data, context)
       const output = normalizeToolOutput(rawOutput)
 

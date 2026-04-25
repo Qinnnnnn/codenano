@@ -123,6 +123,7 @@ export {
   coreTools,
   extendedTools,
   allTools,
+  sandboxCoreTools,
 
   // Individual tools — fully functional
   FileReadTool,
@@ -197,6 +198,7 @@ export type {
   Agent,
   Session,
   AgentConfig,
+  RuntimeContext,
   Result,
   Usage,
 

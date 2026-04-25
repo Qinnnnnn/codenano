@@ -7,6 +7,17 @@
 
 import type { ZodType } from 'zod'
 
+// ─── Runtime Context ────────────────────────────────────────────────────────
+
+/**
+ * Discriminated union for runtime context with compile-time safety.
+ * - local: runs tools directly on the host filesystem
+ * - sandbox: runs tools inside a Docker container with path remapping
+ */
+export type RuntimeContext =
+  | { type: 'local'; cwd: string }
+  | { type: 'sandbox'; cwd: string; hostWorkspaceDir: string; containerId: string }
+
 // ─── Agent Configuration ────────────────────────────────────────────────────
 
 /** Configuration for creating an Agent */
@@ -19,6 +30,9 @@ export interface AgentConfig {
 
   /** Custom base URL for API requests (e.g. proxy endpoints) */
   baseURL?: string
+
+  /** Runtime context for type-safe branching (local vs sandbox). */
+  runtime?: RuntimeContext
 
   /** Tools available to the agent */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -211,8 +225,8 @@ export interface ToolDef<TInput = unknown> {
 
 /** Context passed to tool execute functions */
 export interface ToolContext {
-  /** Current working directory */
-  cwd?: string
+  /** Runtime context for type-safe branching (local vs sandbox) */
+  runtime?: RuntimeContext
 
   /** Abort signal for cooperative cancellation */
   signal: AbortSignal

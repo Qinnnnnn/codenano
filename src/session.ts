@@ -133,7 +133,7 @@ export class SessionImpl implements Session {
       model: this.config.model,
       tools: this.config.tools,
       language: this.config.language,
-      environment: detectEnvironment(),
+      environment: detectEnvironment(this.config.runtime?.cwd),
       memoryDir: this.config.memory?.autoLoad !== false ? this.config.memory?.memoryDir : undefined,
     })
 
@@ -147,7 +147,7 @@ export class SessionImpl implements Session {
     let prompt = [...effective].filter(Boolean).join('\n\n')
 
     if (this.config.autoLoadInstructions) {
-      const instructions = await loadInstructions()
+      const instructions = await loadInstructions({ cwd: this.config.runtime?.cwd })
       if (instructions) {
         prompt = prompt + '\n\n' + instructions
       }
