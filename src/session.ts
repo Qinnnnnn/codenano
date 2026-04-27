@@ -183,6 +183,56 @@ export class SessionImpl implements Session {
     }, this.config.persistence)
   }
 
+  /**
+   * Repair messages after abort: if the last assistant message contains
+   * tool_use blocks without corresponding tool_results, generate cancel
+   * tool_results and persist them. This prevents Anthropic API 400 errors
+   * on the next turn.
+   */
+  private repairMessagesAfterAbort(): void {
+    const lastAssistant = this.messages[this.messages.length - 1]
+    if (!lastAssistant || lastAssistant.role !== 'assistant' || !Array.isArray(lastAssistant.content)) return
+
+    const toolUseIds = lastAssistant.content
+      .filter((b: any) => b.type === 'tool_use')
+      .map((b: any) => b.id as string)
+    if (toolUseIds.length === 0) return
+
+    // Check if there's already a tool_result message following this assistant message
+    const lastUser = this.messages[this.messages.length - 2]
+    const lastUserContent = lastUser?.role === 'user' && Array.isArray(lastUser.content) ? lastUser.content : null
+    if (lastUserContent) {
+      const answeredIds = new Set(
+        lastUserContent
+          .filter((b: any) => b.type === 'tool_result')
+          .map((b: any) => b.tool_use_id as string),
+      )
+      const unpaired = toolUseIds.filter(id => !answeredIds.has(id))
+      if (unpaired.length === 0) return
+
+      // Append cancel results for unpaired tool_use blocks
+      const cancelResults: ContentBlockParam[] = unpaired.map(id => ({
+        type: 'tool_result' as const,
+        tool_use_id: id,
+        content: 'Tool execution cancelled',
+        is_error: true,
+      }))
+      lastUser!.content = [...lastUserContent, ...cancelResults]
+      this.persistMessage(lastUser!)
+      return
+    }
+
+    // No tool_result message at all — create one
+    const cancelResults: ContentBlockParam[] = toolUseIds.map(id => ({
+      type: 'tool_result' as const,
+      tool_use_id: id,
+      content: 'Tool execution cancelled',
+      is_error: true,
+    }))
+    this.messages.push({ role: 'user', content: cancelResults })
+    this.persistMessage(this.messages[this.messages.length - 1]!)
+  }
+
   async send(prompt: string): Promise<Result> {
     let result: Result | undefined
     for await (const event of this.runSessionTurn(prompt)) {
@@ -210,6 +260,32 @@ export class SessionImpl implements Session {
       role: m.role,
       content: m.content,
     })) as PublicMessageParam[]
+  }
+
+  /**
+   * Handle abort during tool execution: discard pending tools, persist
+   * collected results, repair messages, and yield aborted event.
+   */
+  private async *handleAbortDuringToolExecution(
+    streamingExecutor: StreamingToolExecutor | null,
+    allToolResults: ContentBlockParam[],
+    enableBudget: boolean,
+  ): AsyncGenerator<StreamEvent, void> {
+    this.abortController = new AbortController()
+    if (streamingExecutor) {
+      for (const result of streamingExecutor.discard()) {
+        allToolResults.push(result.apiResult)
+        yield result.event
+      }
+    }
+    if (allToolResults.length > 0) {
+      const budgeted = enableBudget ? applyMessageBudget(allToolResults) : allToolResults
+      this.messages.push({ role: 'user', content: budgeted })
+      this.persistMessage(this.messages[this.messages.length - 1]!)
+    }
+    this.repairMessagesAfterAbort()
+    const partialText = extractLastAssistantText(this.messages)
+    yield { type: 'aborted', partialText }
   }
 
   // ─── Session Turn ───────────────────────────────────────────────────
@@ -266,7 +342,10 @@ export class SessionImpl implements Session {
 
       if (this.abortController.signal.aborted) {
         this.abortController = new AbortController()
-        break
+        this.repairMessagesAfterAbort()
+        const partialText = extractLastAssistantText(this.messages)
+        yield { type: 'aborted', partialText }
+        return
       }
 
       // Note: turn_start is yielded by toPublicEvent(message_start) inside the streaming loop below
@@ -355,10 +434,18 @@ export class SessionImpl implements Session {
           }
         }
       } catch (error) {
-        if (streamingExecutor) {
-          for (const result of streamingExecutor.discard()) {
-            // Discard on error
+        // ── Abort during model call ─────────────────────────────────────
+        if (this.abortController.signal.aborted) {
+          if (streamingExecutor) {
+            for (const result of streamingExecutor.discard()) {
+              yield result.event
+            }
           }
+          this.abortController = new AbortController()
+          this.repairMessagesAfterAbort()
+          const partialText = extractLastAssistantText(this.messages)
+          yield { type: 'aborted', partialText }
+          return
         }
 
         if (error instanceof FallbackTriggeredError && this.config.fallbackModel) {
@@ -556,6 +643,7 @@ export class SessionImpl implements Session {
       const allToolResults: ContentBlockParam[] = []
       const hookCtx = buildHookContext(this._sessionId, turnCount, this.messages)
 
+      try {
       if (streamingExecutor) {
         for await (const result of streamingExecutor.getRemainingResults()) {
           allToolResults.push(result.apiResult)
@@ -643,6 +731,15 @@ export class SessionImpl implements Session {
             }
           }
         }
+      }
+      } catch (toolError) {
+        if (this.abortController.signal.aborted) {
+          for await (const event of this.handleAbortDuringToolExecution(streamingExecutor, allToolResults, enableBudget)) {
+            yield event
+          }
+          return
+        }
+        throw toolError
       }
 
       const budgetedResults = enableBudget ? applyMessageBudget(allToolResults) : allToolResults
