@@ -1,22 +1,22 @@
-# codenano
+# codenano · v0.3.1
 
 [![npm version](https://img.shields.io/npm/v/codenano.svg)](https://www.npmjs.com/package/codenano)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-374%20passing-brightgreen.svg)](https://github.com/Adamlixi/codenano)
 
-**The lightweight AI coding agent SDK inspired by production agent architecture.**
+**The lightweight AI coding agent SDK inspired by Claude Code's architecture.**
 
-Built with battle-tested patterns from production AI coding systems. ~8,000 lines of focused code, zero bloat. Open source, fully customizable, production-ready.
+Built with battle-tested patterns extracted from Claude Code's production agent engine. ~8,000 lines of focused code, zero bloat. Open source, fully customizable, production-ready.
 
-> 💡 **Production-Grade Patterns** — Agent loop architecture inspired by real-world AI coding assistants, now available as a standalone SDK.
+> 💡 **Inspired by Claude Code** — The same battle-tested agent loop architecture that powers Anthropic's official coding assistant, now available as a standalone SDK.
 
 ## Why codenano?
 
 ### 🚀 **Lightweight & Focused**
 - **~8,000 lines** of pure, focused code
 - Zero bloat, zero overhead
-- **Production-grade agent engine**
+- **Claude Code's agent engine**
 
 ### ⚡ **Build AI Coding Agents Fast**
 ```bash
@@ -198,6 +198,22 @@ const agent = createAgent({
 
 All hooks are best-effort — errors in hooks never crash the agent.
 
+### Session abort? Safe and clean.
+
+Handle user-initiated aborts without corrupted state:
+
+```typescript
+const session = agent.session()
+for await (const event of session.stream('Analyze codebase')) {
+  if (event.type === 'aborted') {
+    console.log('User aborted, session still usable')
+    await session.send('Continue from where we left off')
+  }
+}
+```
+
+Abortion triggers message repair — unpaired tool_use results are canceled, ensuring message history integrity for follow-up queries.
+
 ### Sub-agent spawning? One function.
 
 ```typescript
@@ -211,6 +227,21 @@ const agent = createAgent({
   tools: [...coreTools(), agentTool],  // model can now spawn sub-agents
 })
 ```
+
+### Sandbox tools? Isolated execution.
+
+Tools with path isolation for untrusted code:
+
+```typescript
+import { sandboxTools, createAgent } from 'codenano'
+
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  tools: sandboxTools(),  // File/Bash tools with path restrictions
+})
+```
+
+Sandbox tools restrict file access and command execution to a configurable root directory, preventing accidental or malicious access outside the sandbox.
 
 ### Context analysis? Ready.
 
@@ -298,7 +329,7 @@ const agent = createAgent({
 
 ## codenano vs Other Frameworks
 
-**Lightweight, production-grade, inspired by battle-tested patterns.**
+**Lightweight, inspired by Claude Code's battle-tested patterns.**
 
 | Feature | codenano | Vercel AI SDK | LangChain |
 |---------|----------|---------------|-----------|
@@ -313,7 +344,7 @@ const agent = createAgent({
 
 **When to use codenano:**
 - Building AI coding tools or agents
-- Need production-grade reliability (auto-compact, 413 recovery, tool budgeting)
+- Need Claude Code-proven reliability (auto-compact, 413 recovery, tool budgeting)
 - Want lightweight, focused architecture
 - Prefer battle-tested patterns over experimental features
 
@@ -420,6 +451,8 @@ ANTHROPIC_API_KEY=sk-xxx npm run test:integration
 - [x] Sub-agent spawning (createAgentTool)
 - [x] Context collapse (tool classification, context analysis)
 - [x] MCP protocol support (stdio/SSE/HTTP transports)
+- [x] Session abort handling (message repair for clean interruption)
+- [x] Sandbox runtime (path-isolated tools for untrusted code)
 
 **Roadmap complete!**
 
@@ -451,5 +484,9 @@ npm install codenano
 ```
 
 **Questions?** Check the [docs](docs/) or open an issue.
+
+---
+
+*Last updated: 2026-04-28 · [Changelog](CHANGELOG.md)*
 
 **Ready to build?** See [examples/](examples/) for inspiration.

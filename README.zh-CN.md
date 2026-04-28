@@ -1,28 +1,31 @@
-# codenano
+# codenano · v0.3.1
 
-**从 Claude Code 提取的轻量级 AI 编码代理 SDK。**
+[![npm version](https://img.shields.io/npm/v/codenano.svg)](https://www.npmjs.com/package/codenano)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/tests-374%20passing-brightgreen.svg)](https://github.com/Adamlixi/codenano)
 
-基于Claude Code 的生产架构重新构建。保留所有能力，去除冗余。开源、完全可定制、生产就绪。
+**轻量级 AI 编码代理 SDK，受 Claude Code 架构启发。**
 
-> 💡 **基于 Claude Code** — 与驱动 Anthropic 官方编码测试引擎相同，现在作为独立 SDK 提供。
+从 Claude Code 生产代理引擎中提取的经过实战检验的代码模式。约 8,000 行专注代码，零膨胀。开源、完全可定制、生产就绪。
 
-[English](README.md) | 简体中文
+> 💡 **受 Claude Code 启发** — 与驱动 Anthropic 官方编码助手的相同实战检验代理循环架构，现作为独立 SDK 提供。
 
 ## 为什么选择 codenano？
 
-### 🚀 **Claude Code 的核心，轻 96%**
-- **~6,500 行**纯粹、专注的代码
-- Claude Code：150,000+ 行（IDE 集成、UI 等）
-- **相同的代理引擎，零开销**
+### 🚀 **轻量且专注**
+- **约 8,000 行**纯粹、专注的代码
+- 零膨胀，零开销
+- **Claude Code 的代理引擎**
 
-### ⚡ **Claude Code 能做的，你也能做**
+### ⚡ **快速构建 AI 编码代理**
 ```bash
 npm install codenano
 ```
-60 秒内构建你自己的 Claude Code。无需 IDE。无限制。
+60 秒内构建你自己的 AI 编码代理。无需 IDE。无限制。
 
 ### 🎯 **经过实战检验的架构**
-从 Claude Code 的生产引擎中提取。大规模验证，为开发者优化。
+生产级代理模式。经过大规模验证，为开发者优化。
 
 ---
 
@@ -42,7 +45,7 @@ const result = await agent.ask('读取 package.json 并总结它')
 console.log(result.text)
 ```
 
-**就是这样。**无需复杂设置。无需配置地狱。只有纯粹的生产力。
+**就这样。**无需复杂设置。无需配置地狱。只有纯粹的生产力。
 
 ### 流式输出？内置。
 
@@ -73,7 +76,7 @@ const session = agent.session()
 console.log(session.id)  // 保存这个 UUID
 await session.send('分析代码库')
 
-// 之后 — 从上次中断处恢复
+// 之后 — 从中断处恢复
 const resumed = agent.session(session.id)
 await resumed.send('我们发现了什么？')
 ```
@@ -84,19 +87,19 @@ await resumed.send('我们发现了什么？')
 const agent = createAgent({
   model: 'claude-sonnet-4-6',
   memory: {
-    autoLoad: true,           // 将已保存的记忆注入系统提示
-    extractStrategy: 'auto',  // 每轮结束后自动提取记忆
+    autoLoad: true,           // 将保存的记忆注入系统提示词
+    extractStrategy: 'auto',  // 每轮对话后提取记忆
   },
 })
 
-// 代理从对话中学习，并在会话间记忆：
+// 代理从对话中学习并跨会话记住：
 // - 用户偏好和角色
-// - 工作方式反馈（避免什么/重复什么）
+// - 方法反馈（避免什么/重复什么）
 // - 项目上下文和决策
-// - 外部系统的指引
+// - 外部系统指针
 ```
 
-记忆以带有 frontmatter 的 markdown 文件存储，由 `MEMORY.md` 索引。也可以直接使用独立 API：
+记忆以带 frontmatter 的 markdown 文件形式存储，由 `MEMORY.md` 索引。可通过独立 API 直接访问：
 
 ```typescript
 import { saveMemory, scanMemories, loadMemoryIndex } from 'codenano'
@@ -105,7 +108,7 @@ saveMemory({
   name: 'user_role',
   description: '用户是后端工程师',
   type: 'user',
-  content: '擅长 Go 和 Python，刚接触 React',
+  content: '精通 Go 和 Python，React 新手',
 }, '/path/to/memory')
 
 const memories = scanMemories('/path/to/memory')
@@ -113,15 +116,15 @@ const memories = scanMemories('/path/to/memory')
 
 ### 存储路径
 
-记忆和会话持久化都有合理的默认路径，也支持自定义。目录不存在时会自动创建。
+记忆和会话持久化都有合理的默认值并支持自定义路径。目录不存在时会自动创建。
 
 | 功能 | 默认路径 | 自定义配置 |
-|------|---------|-----------|
+|---------|-------------|---------------|
 | **记忆** | `~/.agent-core/memory/<cwd-hash>/` | `memory.memoryDir` |
 | **会话** | `~/.agent-core/sessions/` | `persistence.storageDir` |
 
 ```typescript
-// 使用默认路径 — 零配置
+// 使用默认值 — 零配置
 const agent = createAgent({
   model: 'claude-sonnet-4-6',
   memory: { autoLoad: true, extractStrategy: 'auto' },
@@ -138,14 +141,14 @@ const agent = createAgent({
 
 ### 成本追踪？自动。
 
-每个 `Result` 都包含 `costUSD` — 基于模型定价的 API 费用估算。
+每个 `Result` 都包含 `costUSD` — 基于模型定价的估算 API 成本。
 
 ```typescript
 const result = await agent.ask('解释这段代码')
-console.log(`费用: $${result.costUSD.toFixed(4)}`)  // 例如 $0.0047
+console.log(`成本: $${result.costUSD.toFixed(4)}`)  // 例如 $0.0047
 ```
 
-独立 API 用于预算管理：
+使用独立 API 进行预算管理：
 
 ```typescript
 import { CostTracker, calculateCostUSD } from 'codenano'
@@ -157,7 +160,7 @@ console.log(`总计: $${tracker.summary.totalUSD.toFixed(4)}`)
 
 ### Git 集成？内置。
 
-自动检测 git 仓库状态，注入系统提示：
+自动检测 git 仓库状态以注入系统提示词：
 
 ```typescript
 import { getGitState, buildGitPromptSection } from 'codenano'
@@ -178,7 +181,7 @@ const agent = createAgent({
   model: 'claude-sonnet-4-6',
   tools: coreTools(),
 
-  onTurnStart: ({ turnNumber }) => console.log(`第 ${turnNumber} 轮`),
+  onTurnStart: ({ turnNumber }) => console.log(`回合 ${turnNumber}`),
 
   // 阻止危险工具
   onPreToolUse: ({ toolName, toolInput }) => {
@@ -189,11 +192,27 @@ const agent = createAgent({
   onPostToolUse: ({ toolName, output }) => console.log(`${toolName}: ${output.slice(0, 50)}`),
   onCompact: ({ messagesBefore, messagesAfter }) => console.log(`压缩: ${messagesBefore} → ${messagesAfter}`),
   onError: ({ error }) => console.error(error.message),
-  onMaxTurns: () => console.warn('达到最大轮次'),
+  onMaxTurns: () => console.warn('达到最大回合数'),
 })
 ```
 
 所有钩子都是尽力执行 — 钩子中的错误不会导致代理崩溃。
+
+### 会话中止？安全可靠。
+
+处理用户主动中止而不产生状态损坏：
+
+```typescript
+const session = agent.session()
+for await (const event of session.stream('分析代码库')) {
+  if (event.type === 'aborted') {
+    console.log('用户中止，会话仍可使用')
+    await session.send('从中断处继续')
+  }
+}
+```
+
+中止时会触发消息修复 — 取消未完成的 tool_use 结果，确保消息历史完整性，支持后续查询。
 
 ### 子代理生成？一个函数。
 
@@ -209,9 +228,24 @@ const agent = createAgent({
 })
 ```
 
+### 沙箱工具？隔离执行。
+
+为不受信任代码提供路径隔离的工具：
+
+```typescript
+import { sandboxTools, createAgent } from 'codenano'
+
+const agent = createAgent({
+  model: 'claude-sonnet-4-6',
+  tools: sandboxTools(),  // 带路径限制的 File/Bash 工具
+})
+```
+
+沙箱工具将文件访问和命令执行限制在可配置的根目录内，防止意外或恶意访问沙箱外的资源。
+
 ### 上下文分析？就绪。
 
-分析对话上下文，识别压缩机会：
+分析对话上下文以识别压缩机会：
 
 ```typescript
 import { analyzeContext, classifyTool } from 'codenano'
@@ -223,14 +257,17 @@ classifyTool('Grep')   // 'search'
 classifyTool('Bash')   // 'execute'
 ```
 
-### 技能系统？从磁盘加载。
+### 技能？从磁盘加载。
 
-技能是 Markdown 文件 + YAML frontmatter — 与 Claude Code 格式一致：
+技能是带 YAML frontmatter 的 Markdown 文件：
 
 ```typescript
 import { loadSkills, createSkillTool, createAgent } from 'codenano'
 
-const skills = loadSkills()  // 从 .claude/skills/ 加载
+// 从 .claude/skills/ 目录加载技能
+const skills = loadSkills()
+
+// 创建功能性 SkillTool
 const skillTool = createSkillTool(skills)
 
 const agent = createAgent({
@@ -239,20 +276,20 @@ const agent = createAgent({
 })
 ```
 
-技能文件格式 (`.claude/skills/my-skill/SKILL.md`):
+技能文件格式 (`.claude/skills/my-skill/SKILL.md`)：
 ```markdown
 ---
 name: review-pr
-description: 审查 Pull Request
+description: Review a pull request
 arguments: [pr_number]
 context: inline
 ---
-审查 PR #$pr_number。关注 bug 和安全问题。
+Review PR #$pr_number. Focus on bugs and security.
 ```
 
 ### MCP 协议？支持。
 
-连接任何 MCP server，使用其工具：
+连接任何 MCP 服务器并使用其工具：
 
 ```typescript
 import { createAgent, connectMCPServers } from 'codenano'
@@ -262,7 +299,10 @@ const { tools, connections } = await connectMCPServers([
 ])
 
 const agent = createAgent({ model: 'claude-sonnet-4-6', tools })
-const result = await agent.ask('列出未关闭的 issue')
+const result = await agent.ask('列出 open issues')
+
+// 清理
+await disconnectAll(connections)
 ```
 
 ### 自定义工具
@@ -273,7 +313,7 @@ import { z } from 'zod'
 
 const readFile = defineTool({
   name: 'ReadFile',
-  description: '从磁盘读取文件',
+  description: 'Read a file from disk',
   input: z.object({ path: z.string() }),
   execute: async ({ path }) => fs.readFileSync(path, 'utf-8'),
   isReadOnly: true,
@@ -287,90 +327,48 @@ const agent = createAgent({
 
 ---
 
-## codenano vs Claude Code
+## codenano vs 其他框架
 
-**相同的引擎。不同的理念。**
+**轻量级，受 Claude Code 实战检验模式启发。**
 
-| 特性 | codenano | Claude Code |
-|------|----------|-------------|
-| **基于** | Claude Code 核心 | Anthropic 官方产品 |
-| **代码行数** | ~6,500（仅核心） | 150,000+（完整应用） |
-| **包含内容** | 代理引擎 | 引擎 + IDE + UI |
-| **设置时间** | < 1 分钟 | 安装 IDE 扩展 |
-| **用例** | 构建自定义代理 | 在 IDE 中直接使用 |
-| **可定制性** | ✅ 完全开放 | ⚠️ 闭源 |
-| **独立运行** | ✅ 是 | ❌ 需要 IDE |
-| **生产就绪** | ✅ 是 | ✅ 是 |
-| **开源** | ✅ MIT 许可 | ❌ 专有 |
-
-**这样理解：**
-- **Claude Code** = 完整汽车（引擎 + 车身 + 内饰）
-- **codenano** = 只有引擎（自己造车）
+| 特性 | codenano | Vercel AI SDK | LangChain |
+|---------|----------|---------------|-----------|
+| **理念** | 受生产级 AI 编码系统启发 | 通用 AI SDK | 通用代理框架 |
+| **代码行数** | ~8,000（专注） | ~15,000+ | 100,000+ |
+| **包含内容** | 代理引擎 + 15 个工具 | 多模型 + 流式 | 万物 + 厨房水槽 |
+| **设置时间** | < 1 分钟 | < 1 分钟 | 10+ 分钟 |
+| **使用场景** | 构建编码代理 | 构建任意 AI 应用 | 构建复杂工作流 |
+| **生产强化** | ✅ 完整（压缩、恢复、预算） | ⚠️ 基础 | ⚠️ 基础 |
+| **流式工具执行** | ✅ 是 | ❌ 否 | ❌ 否 |
+| **开源** | ✅ MIT 许可证 | ✅ Apache 2.0 | ✅ MIT 许可证 |
 
 **何时使用 codenano：**
-- 构建自定义 AI 编码工具
-- 将代理集成到你的产品中
-- 需要完全控制行为
-- 想要理解它如何工作
-
-**何时使用 Claude Code：**
-- 只想用 AI 辅助编码
-- 更喜欢 Anthropic 官方支持
-- 满意 IDE 集成
+- 构建 AI 编码工具或代理
+- 需要 Claude Code 验证过的可靠性（自动压缩、413 恢复、工具预算）
+- 想要轻量级、专注的架构
+- 偏好实战检验模式而非实验性功能
 
 ---
 
-## 工作原理
-
-**codenano 提取了 Claude Code 的代理循环：**
-
-```
-1. 用户发送消息
-2. 代理使用工具调用 Claude API
-3. Claude 决定：响应或使用工具
-4. 如果使用工具 → 执行 → 发送结果
-5. 重复直到完成
-```
-
-**我们从 Claude Code 提取了什么：**
-- ✅ 代理循环逻辑
-- ✅ 工具执行系统
-- ✅ 流式支持
-- ✅ 多轮会话
-- ✅ 自动压缩（上下文管理）
-- ✅ 权限系统
-- ✅ 重试和回退
-
-**我们排除了什么：**
-- ❌ IDE 集成
-- ❌ UI 组件
-- ❌ 文件监视器
-- ❌ Git UI
-- ❌ 桌面应用外壳
-
-**结果：**纯粹的代理引擎，可嵌入任何地方。
-
----
-
-## 你能得到什么
+## 你得到的
 
 ### 🛠️ **15 个内置工具**
-开箱即用，零配置：
+零配置即可使用：
 - **文件操作：** Read、Edit、Write
 - **代码搜索：** Glob（模式匹配）、Grep（正则搜索）
 - **执行：** Bash 命令
-- **高级：** Web 搜索、Web 获取、LSP 等
+- **高级：** Web 搜索、web 获取、LSP 等
 
 ### 🎨 **三种工具预设**
 ```typescript
-coreTools()      // 基础 6 个工具
-extendedTools()  // 核心 + 5 个
+coreTools()      // 核心 6 工具
+extendedTools()  // 核心 + 5 个额外工具
 allTools()       // 全部 15 个工具
 ```
 
 ### 🔧 **生产特性**
 - ✅ 自动压缩（处理上下文溢出）
-- ✅ 重试和回退（弹性 API 调用）
+- ✅ 重试与回退（弹性 API 调用）
 - ✅ Token 预算（成本控制）
 - ✅ 权限系统（安全）
 - ✅ 钩子系统（生命周期事件）
@@ -392,18 +390,18 @@ codenano/
     agent.ts           # 核心代理循环
     session.ts         # 多轮对话
     session-storage.ts # 会话持久化（JSONL）
-    hooks.ts           # 生命周期钩子
-    cost-tracker.ts    # 成本追踪
+    hooks.ts           # 生命周期钩子辅助函数
+    cost-tracker.ts    # 基于 Token 的成本追踪
     git.ts             # Git 状态检测
-    context-analysis.ts # 工具分类与上下文分析
+    context-analysis.ts # 工具分类和上下文分析
     tools/             # 15 个内置工具 + createAgentTool
-    prompt/            # 系统提示构建器
+    prompt/            # 系统提示词构建器
     memory/            # 持久化记忆系统
     provider.ts        # Anthropic SDK + Bedrock
     compact.ts         # 自动压缩逻辑
   tests/               # 374 个测试
-  examples/            # 可运行示例
-  docs/                # 完整文档
+  examples/            # 可直接运行的演示
+  docs/                # 全面的指南
 ```
 
 **374 个测试。100% 生产就绪。**
@@ -412,14 +410,14 @@ codenano/
 
 ## 文档
 
-| 文档 | 你将学到 |
-|------|----------|
-| [架构](docs/architecture.md) | 代理循环、交互模式、流事件 |
-| [工具](docs/tools.md) | 内置工具、自定义工具、权限 |
-| [配置](docs/configuration.md) | 完整配置参考、CLAUDE.md 支持 |
-| [可靠性](docs/reliability.md) | 自动压缩、重试、回退、预算 |
-| [提示系统](docs/prompt-system.md) | 系统提示架构 |
-| [差异分析](docs/gap-analysis.md) | SDK vs Claude Code 对比 |
+| 文档 | 你将学到什么 |
+|-----|-------------------|
+| [Architecture](docs/architecture.md) | 代理循环、交互模式、流事件 |
+| [Tools](docs/tools.md) | 内置工具、自定义工具、权限 |
+| [Configuration](docs/configuration.md) | 完整配置参考、CLAUDE.md 支持 |
+| [Reliability](docs/reliability.md) | 自动压缩、重试、回退、预算 |
+| [Prompt System](docs/prompt-system.md) | 系统提示词架构 |
+| [Gap Analysis](docs/gap-analysis.md) | SDK 与 Claude Code 对比 |
 
 ---
 
@@ -432,7 +430,7 @@ npm test
 # 带覆盖率
 npx vitest run --coverage
 
-# 集成测试（需要 API 密钥）
+# 集成测试（需要 API key）
 ANTHROPIC_API_KEY=sk-xxx npm run test:integration
 ```
 
@@ -449,22 +447,24 @@ ANTHROPIC_API_KEY=sk-xxx npm run test:integration
 - [x] 会话持久化（JSONL 保存/恢复）
 - [x] 扩展钩子（8 个生命周期钩子）
 - [x] 成本追踪（基于 token 的 USD 估算）
-- [x] Git 集成（状态检测、提示注入）
+- [x] Git 集成（状态检测、提示词注入）
 - [x] 子代理生成（createAgentTool）
 - [x] 上下文折叠（工具分类、上下文分析）
 - [x] MCP 协议支持（stdio/SSE/HTTP 传输）
+- [x] 会话中止处理（消息修复实现干净中断）
+- [x] 沙箱运行时（为不受信任代码提供路径隔离工具）
 
-**路线图已全部完成！**
+**路线图完成！**
 
 ---
 
 ## 为什么选择 codenano？
 
 ### 对于初创公司
-**更快交付你的 AI 编码产品。**停止与臃肿框架搏斗。几天而非几个月上市。
+**更快交付你的 AI 编码产品。**不再与膨胀的框架搏斗。几天内上市，而非几个月。
 
 ### 对于企业
-**从第一天起就生产就绪。**经过实战检验的架构、全面测试、完全控制你的技术栈。
+**从第一天起就生产就绪。**实战检验的架构、全面的测试、对堆栈的完全控制。
 
 ### 对于开发者
 **真正好用。**清晰的 API、优秀的文档、零魔法。按你想要的方式构建。
@@ -484,5 +484,9 @@ npm install codenano
 ```
 
 **有问题？**查看[文档](docs/)或提交 issue。
+
+---
+
+*最后更新: 2026-04-28 · [Changelog](CHANGELOG.md)*
 
 **准备构建？**查看[示例](examples/)获取灵感。
